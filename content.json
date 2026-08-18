@@ -7,9 +7,18 @@
     "metaDescription": "Personal notebook and exploratory research on learning algorithms, AI for science, and quantum computing.",
     "copyrightYear": 2026,
     "socialLinks": [
-      { "platform": "GitHub", "url": "https://github.com" },
-      { "platform": "Twitter", "url": "https://twitter.com" },
-      { "platform": "Email", "url": "mailto:karan@research.org" }
+      {
+        "platform": "GitHub",
+        "url": "https://github.com"
+      },
+      {
+        "platform": "Twitter",
+        "url": "https://twitter.com"
+      },
+      {
+        "platform": "Email",
+        "url": "mailto:karan@research.org"
+      }
     ]
   },
   "hero": {
@@ -34,7 +43,11 @@
       "date": "2026-04-22",
       "formattedDate": "Apr 22, 2026",
       "readTime": "30 min",
-      "tags": ["#hdc", "#interpretability", "#notes"],
+      "tags": [
+        "#hdc",
+        "#interpretability",
+        "#notes"
+      ],
       "title": "Bundling, Binding, And Other Things Your Brain Probably Does, Or Not",
       "summary": "An exploratory walk through the algebra of compositional representation.",
       "subtitle": "An exploratory walk through the algebra of compositional representation and vector symbolic architectures.",
@@ -83,7 +96,11 @@
       "date": "2026-02-14",
       "formattedDate": "Feb 14, 2026",
       "readTime": "14 min",
-      "tags": ["#theory", "#transformers", "#mechanistic"],
+      "tags": [
+        "#theory",
+        "#transformers",
+        "#mechanistic"
+      ],
       "title": "Phase Transitions in Small Linear Attention Networks",
       "summary": "Tracing sudden emergence of in-context induction capabilities across training trajectories in toy attention models.",
       "subtitle": "Tracing sudden emergence of in-context induction capabilities across training trajectories in toy attention models.",
@@ -122,7 +139,11 @@
       "date": "2025-11-08",
       "formattedDate": "Nov 08, 2025",
       "readTime": "22 min",
-      "tags": ["#quantum", "#geometry", "#optimization"],
+      "tags": [
+        "#quantum",
+        "#geometry",
+        "#optimization"
+      ],
       "title": "Geometric Priors for Quantum State Tomography",
       "summary": "Constraining density matrix reconstruction using Riemannian manifold geometry and symmetry group invariants.",
       "subtitle": "Constraining density matrix reconstruction using Riemannian manifold geometry and symmetry group invariants.",
@@ -156,25 +177,46 @@
       "date": "2025-08-19",
       "formattedDate": "Aug 19, 2025",
       "readTime": "18 min",
-      "tags": ["#deep-learning", "#spectral-bias"],
+      "tags": [
+        "#deep-learning",
+        "#spectral-bias",
+        "#gradient-starvation",
+        "#generalization"
+      ],
       "title": "On Gradient Starvation and Spectral Bias in Deep ResNets",
-      "summary": "Why deep residual networks default to low-frequency features, and what happens when you force high-frequency signal propagation.",
-      "subtitle": "Why deep residual networks default to low-frequency features, and what happens when you force high-frequency signal propagation.",
+      "summary": "Why neural networks starve robust compositional features in favor of easy statistical shortcuts, and how cross-entropy induces failure under distribution shifts.",
+      "subtitle": "An inquiry into gradient starvation, shortcut learning, feature competition, and out-of-distribution generalization in deep networks.",
+      "published": true,
       "sections": [
         {
           "id": "abstract",
           "title": "Abstract",
-          "content": "<div class=\"p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic\"><strong>Abstract —</strong> We analyze Neural Tangent Kernels in residual architectures, proving that identity skip connections act as frequency dampeners, inducing severe gradient starvation on high-wavenumber Fourier signals.</div>"
+          "content": "<div class=\"p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic\"><strong>Abstract —</strong> We examine why neural networks fail to learn all available predictive features equally. During empirical risk minimization with cross-entropy loss, gradient descent prioritizes easily separable statistical shortcuts. As classification confidence approaches saturation, the vanishing gradient signal starves remaining robust core features, precipitating catastrophic performance collapse when exposed to out-of-distribution (OOD) shifts.</div>"
         },
         {
           "id": "sec-1",
-          "title": "1. Spectral Bias in Neural Tangent Kernels",
-          "content": "<p>Under gradient descent in overparameterized regimes, neural networks learn target functions by decomposing them into eigenfunctions of their Neural Tangent Kernel (NTK). Low-frequency Fourier modes correspond to large eigenvalues and are learned exponentially faster than high-frequency components.</p>"
+          "title": "1. Neural Networks Have a Learning Bias",
+          "content": "<p>Neural networks do not learn all available features equally. During training, gradient descent naturally tends to prioritize features that are easier or stronger predictors of the target.</p><p>Imagine training a visual classifier to recognize cows. The input images contain multiple signals:</p><ul class=\"list-disc pl-5 space-y-1 my-3 text-[#444]\"><li><strong>Cow shape & anatomy</strong></li><li><strong>Green grass</strong> (high-contrast background)</li><li><strong>Sky</strong> and atmospheric tint</li><li><strong>Dominant background color palette</strong></li></ul><p>Suppose almost every cow image in the training dataset happens to contain lush green grass. The optimization trajectory discovers:</p><div class=\"my-4 p-3 bg-neutral-50 border-l-2 border-neutral-800 font-mono text-xs text-neutral-800\">Green background &rarr; Cow &nbsp;&nbsp;(learned rapidly)<br>Shape / Texture &rarr; Cow &nbsp;&nbsp;&nbsp;&nbsp;(requires complex spatial composition)</div><p>Because the background color is an easy, low-frequency predictive signal, gradient descent gives it absolute priority. The model is not explicitly instructed which feature to rely on; optimization dictates feature utility based purely on which signals reduce empirical loss fastest.</p>"
         },
         {
           "id": "sec-2",
-          "title": "2. Identity Shortcuts as Frequency Filters",
-          "content": "<p>Because residual skip connections propagate DC offsets unobstructed, deep residual networks dampen high-frequency gradients. Introducing adaptive spectral pre-filtering in bottleneck layers restores gradient parity and mitigates cross-entropy saturation.</p>"
+          "title": "2. Cross-Entropy Can Create Gradient Starvation",
+          "content": "<p>When training with cross-entropy loss, the loss function creates an insidious feature competition dynamic known as <strong>gradient starvation</strong>.</p><p>Suppose the model initially makes an uncertain prediction:</p><div class=\"my-3 p-3 bg-neutral-50 rounded font-mono text-xs text-neutral-700\">Actual: Cat<br>Prediction: 55% Cat &nbsp;&rarr;&nbsp; High Loss &nbsp;&rarr;&nbsp; Strong Gradient &nabla;L</div><p>There is still a significant residual error, so the network receives large gradients and continues exploring multiple representation subspaces. However, as the easy shortcut feature is learned, prediction confidence surges:</p><div class=\"my-3 p-3 bg-neutral-50 rounded font-mono text-xs text-neutral-700\">Actual: Cat<br>Prediction: 99.9% Cat &nbsp;&rarr;&nbsp; Loss &approx; 0 &nbsp;&rarr;&nbsp; Gradient &nabla;L &approx; 0</div><p>The optimization dynamics stall:</p><div class=\"my-4 p-4 bg-neutral-50 border border-neutral-200 rounded font-mono text-xs leading-loose text-neutral-800 text-center\"><span class=\"font-bold\">Strong easy feature</span> &rarr; <span class=\"font-bold\">Confidence surges</span> &rarr; <span class=\"font-bold\">Loss &darr;</span> &rarr; <span class=\"font-bold\">Gradient &darr;</span> &rarr; <span class=\"font-bold\">Remaining features starved of gradient signal</span></div><p>The problem is not that the other structural features (like whiskers, ear shapes, and anatomy) are uninformative; rather, the network <em>exhausts its gradient budget</em> before discovering them.</p>"
+        },
+        {
+          "id": "sec-3",
+          "title": "3. A Model Can Learn a Shortcut Without Memorizing Data",
+          "content": "<p>A common misconception in machine learning is that if a model relies on spurious cues, it must be overfitting or memorizing the training samples. <strong>This is not necessarily true.</strong></p><p>A network can learn a genuine, mathematically sound statistical correlation that holds true across the entire training distribution, yet represents the wrong conceptual invariant:</p><div class=\"my-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono\"><div class=\"p-3 bg-neutral-50 border border-neutral-200 rounded\"><strong>Training Distribution:</strong><br>Wolf &rarr; Snow background<br>Dog &rarr; Grass background</div><div class=\"p-3 bg-neutral-50 border border-neutral-200 rounded\"><strong>Discovered Shortcut:</strong><br>Snow &rarr; Wolf<br>Grass &rarr; Dog</div></div><p>This is not memorization&mdash;the model generalized a statistical regularity present throughout the dataset. However, under environment intervention:</p><div class=\"my-3 p-3 bg-red-50/60 border border-red-200 rounded text-xs font-mono text-neutral-800\">Wolf on Grass &rarr; Misclassified as Dog<br>Dog on Snow &rarr; Misclassified as Wolf</div><p>The model learned <code>Image &rarr; Background &rarr; Prediction</code> instead of <code>Image &rarr; Animal Characteristics &rarr; Prediction</code>. A shortcut can be statistically valid on the training distribution while remaining a flawed representation of the underlying task.</p>"
+        },
+        {
+          "id": "sec-4",
+          "title": "4. High Training Accuracy Isn't Enough",
+          "content": "<p>Evaluating models purely on scalar metrics like Accuracy, Loss, or F1-Score obscures what internal representations the network actually constructed.</p><p>Consider two competing architectures:</p><div class=\"my-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono\"><div class=\"p-3 bg-neutral-50 border border-neutral-200 rounded\"><strong>Model A:</strong><br>Train Acc: 99% &nbsp;|&nbsp; Test Acc: 95%<br><em>Learned:</em> Background context &rarr; Class</div><div class=\"p-3 bg-neutral-50 border border-neutral-200 rounded\"><strong>Model B:</strong><br>Train Acc: 98% &nbsp;|&nbsp; Test Acc: 96%<br><em>Learned:</em> Shape + Texture &rarr; Class</div></div><p>Standard benchmarks favor Model A. Yet when the background context shifts:</p><div class=\"my-3 p-3 bg-neutral-50 rounded text-xs font-mono\">Model A performance collapses: 99% &rarr; 40%<br>Model B remains resilient: &nbsp;&nbsp;&nbsp; 98% &rarr; 93%</div><p class=\"font-medium text-black mt-3\">Core Principle: A model can be right for the wrong reason.</p>"
+        },
+        {
+          "id": "sec-5",
+          "title": "5. Gradient Starvation Can Hurt OOD Generalization",
+          "content": "<p><strong>Out-of-Distribution (OOD)</strong> generalization measures how robustly a model behaves when real-world deployment data differs from the training distribution.</p><p>When a network is trained on correlated data (e.g., <em>Cow + Green grass</em>), the gradient starvation mechanism locks in the background shortcut:</p><div class=\"my-4 p-4 bg-neutral-50 border border-neutral-200 rounded font-mono text-xs leading-relaxed text-neutral-800 space-y-1.5\"><div>1. Easy feature learns rapidly</div><div>2. Prediction confidence peaks &rarr; Gradient disappears</div><div>3. Morphological & invariant features remain unlearned</div><div>4. Model dependencies solidify around the shortcut</div><div>5. Environment shifts (Cow in Desert / Mountain / Snow)</div><div>6. Shortcut vanishes &rarr; <strong>OOD performance collapses</strong></div></div><p>Mitigating gradient starvation requires regularizers such as spectral decoupling, feature-dropout, and invariant risk minimization to force gradient flow into higher-order geometric representations.</p>"
         }
       ]
     },
@@ -185,7 +227,11 @@
       "date": "2025-05-03",
       "formattedDate": "May 03, 2025",
       "readTime": "12 min",
-      "tags": ["#variational-methods", "#sde", "#dynamics"],
+      "tags": [
+        "#variational-methods",
+        "#sde",
+        "#dynamics"
+      ],
       "title": "Notes on Variational Inference for Continuous Dynamical Systems",
       "summary": "A continuous-time formulation of evidence lower bounds (ELBO) parameterized with stochastic differential equations.",
       "subtitle": "A continuous-time formulation of evidence lower bounds (ELBO) parameterized with stochastic differential equations.",

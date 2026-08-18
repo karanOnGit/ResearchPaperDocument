@@ -74,12 +74,12 @@ alter table portfolio_about enable row level security;
 alter table notes enable row level security;
 alter table note_sections enable row level security;
 
--- Create Public Read Policies
-create policy "Allow public read access on portfolio_meta" on portfolio_meta for select using (true);
-create policy "Allow public read access on portfolio_hero" on portfolio_hero for select using (true);
-create policy "Allow public read access on portfolio_about" on portfolio_about for select using (true);
-create policy "Allow public read access on notes" on notes for select using (published = true);
-create policy "Allow public read access on note_sections" on note_sections for select using (true);
+-- Create Policies (Read & Manage)
+create policy "Allow public all access on portfolio_meta" on portfolio_meta for all using (true) with check (true);
+create policy "Allow public all access on portfolio_hero" on portfolio_hero for all using (true) with check (true);
+create policy "Allow public all access on portfolio_about" on portfolio_about for all using (true) with check (true);
+create policy "Allow public all access on notes" on notes for all using (true) with check (true);
+create policy "Allow public all access on note_sections" on note_sections for all using (true) with check (true);
 
 -- =========================================================================
 -- SEED DATA
@@ -120,9 +120,10 @@ values (
   ]
 );
 
--- Seed Note 1
+-- Insert Research Notes
 insert into notes (id, slug, type, date, formatted_date, read_time, tags, title, summary, subtitle, published, sort_order)
-values (
+values
+(
   'note-1',
   'bundling-binding-representation',
   'ESSAY',
@@ -135,21 +136,8 @@ values (
   'An exploratory walk through the algebra of compositional representation and vector symbolic architectures.',
   true,
   1
-);
-
-insert into note_sections (note_id, section_anchor_id, title, content, sort_order)
-values
-  ('note-1', 'abstract', 'Abstract', '<div class="p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic"><strong>Abstract —</strong> How do distributed continuous representations encode structured symbolic hierarchies without suffering exponential explosion in dimensionality? We examine Vector Symbolic Architectures (VSA / Hyperdimensional Computing) and mechanistic transformer interpretability to understand how biological neural circuits and continuous embeddings solve variable binding and compositionality.</div>', 1),
-  ('note-1', 'sec-1', '1. The Superposition Dilemma & Symbolic Graphs', '<p>Classical symbolic AI represents complex compositions using discrete syntactic parse trees, pointer graphs, and recursive tuples. In biological neural tissue and continuous machine learning architectures, however, everything exists as a dense or sparse vector in high-dimensional hyperspace $\mathbb{R}^D$ where $D \ge 10^4$.</p><p>When multiple concepts are simultaneously activated in the same neural substrate, their raw activation patterns linearly superimpose. Without structured algebra, this leads to the classic <em>binding problem</em>: if the network activates $\text{Circle}$, $\text{Square}$, $\text{Red}$, and $\text{Blue}$, how does downstream circuitry know whether it is perceiving a $\text{Red Circle}$ and $\text{Blue Square}$, or a $\text{Blue Circle}$ and $\text{Red Square}$?</p>', 2),
-  ('note-1', 'sec-2', '2. Vector Symbolic Algebraic Operators', '<p>Vector Symbolic Architectures define an algebraic ring over high-dimensional hyperspaces with three fundamental operations: Bundling ($+$), Binding ($\otimes$), and Permutation ($\Pi$).</p>', 3),
-  ('note-1', 'sec-3', '3. Mathematical Formulation of Hyperdimensional Spaces', '<p>Because high-dimensional hyperspheres exhibit concentration of measure, any two randomly sampled independent vectors $\mathbf{u}, \mathbf{v} \sim \mathcal{S}^{D-1}$ satisfy bounded Gaussian cross-talk orthogonality.</p>', 4),
-  ('note-1', 'sec-4', '4. Unbinding, Clean-Up Memories, and Noise Tolerance', '<p>To query a composite vector for a specific role filler, we perform algebraic unbinding by multiplying with the exact pseudoinverse of the role key.</p>', 5),
-  ('note-1', 'sec-5', '5. Neural Substrates and Mechanistic Interpretability', '<p>Recent mechanistic interpretability findings in attention induction heads demonstrate that early layers project continuous key-query pairs into orthogonal subspaces.</p>', 6),
-  ('note-1', 'sec-6', '6. Open Questions & Future Directions', '<p>Key challenges remain in scaling differentiable VSA across neuromorphic and quantum systems.</p>', 7);
-
--- Seed Note 2
-insert into notes (id, slug, type, date, formatted_date, read_time, tags, title, summary, subtitle, published, sort_order)
-values (
+),
+(
   'note-2',
   'phase-transitions-linear-attention',
   'NOTE',
@@ -162,18 +150,8 @@ values (
   'Tracing sudden emergence of in-context induction capabilities across training trajectories in toy attention models.',
   true,
   2
-);
-
-insert into note_sections (note_id, section_anchor_id, title, content, sort_order)
-values
-  ('note-2', 'abstract', 'Abstract', '<div class="p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic"><strong>Abstract —</strong> We study the training dynamics of a 2-layer linear attention model on synthetic Markovian n-gram tasks.</div>', 1),
-  ('note-2', 'sec-1', '1. The Mystery of In-Context Induction', '<p>During pre-training of transformer architectures, empirical evaluation curves often display extended loss plateaus followed by an abrupt, steep descent.</p>', 2),
-  ('note-2', 'sec-2', '2. Minimal Model Architecture & Mathematical Setup', '<p>We isolate a minimal 2-layer linear self-attention network without non-linear MLPs.</p>', 3),
-  ('note-2', 'sec-3', '3. Spectral Dynamics of Query-Key Matrices', '<p>By performing SVD on $M = W_Q^{(2)} (W_K^{(2)})^T$, we observe silent vector rotation during the initial training plateau.</p>', 4);
-
--- Seed Note 3
-insert into notes (id, slug, type, date, formatted_date, read_time, tags, title, summary, subtitle, published, sort_order)
-values (
+),
+(
   'note-3',
   'geometric-priors-quantum-tomography',
   'NOTE',
@@ -186,39 +164,22 @@ values (
   'Constraining density matrix reconstruction using Riemannian manifold geometry and symmetry group invariants.',
   true,
   3
-);
-
-insert into note_sections (note_id, section_anchor_id, title, content, sort_order)
-values
-  ('note-3', 'abstract', 'Abstract', '<div class="p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic"><strong>Abstract —</strong> Reconstructing density matrices on Riemannian quotient manifolds.</div>', 1),
-  ('note-3', 'sec-1', '1. Reconstructing Density Matrices from Pauli Measurements', '<p>Quantum state tomography requires determining the complex density operator $\rho$.</p>', 2),
-  ('note-3', 'sec-2', '2. Riemannian Quotient Manifold Formulation', '<p>By factorizing $\rho = Y Y^\dagger$, state space is modeled on the quotient manifold.</p>', 3);
-
--- Seed Note 4
-insert into notes (id, slug, type, date, formatted_date, read_time, tags, title, summary, subtitle, published, sort_order)
-values (
+),
+(
   'note-4',
   'gradient-starvation-spectral-bias',
   'ESSAY',
   '2025-08-19',
   'Aug 19, 2025',
   '18 min',
-  array['#deep-learning', '#spectral-bias'],
+  array['#deep-learning', '#spectral-bias', '#gradient-starvation', '#generalization'],
   'On Gradient Starvation and Spectral Bias in Deep ResNets',
-  'Why deep residual networks default to low-frequency features, and what happens when you force high-frequency signal propagation.',
-  'Why deep residual networks default to low-frequency features, and what happens when you force high-frequency signal propagation.',
+  'Why neural networks starve robust compositional features in favor of easy statistical shortcuts, and how cross-entropy induces failure under distribution shifts.',
+  'An inquiry into gradient starvation, shortcut learning, feature competition, and out-of-distribution generalization in deep networks.',
   true,
   4
-);
-
-insert into note_sections (note_id, section_anchor_id, title, content, sort_order)
-values
-  ('note-4', 'abstract', 'Abstract', '<div class="p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic"><strong>Abstract —</strong> We analyze Neural Tangent Kernels in residual architectures.</div>', 1),
-  ('note-4', 'sec-1', '1. Spectral Bias in Neural Tangent Kernels', '<p>Under gradient descent, neural networks learn low-frequency Fourier modes exponentially faster.</p>', 2);
-
--- Seed Note 5
-insert into notes (id, slug, type, date, formatted_date, read_time, tags, title, summary, subtitle, published, sort_order)
-values (
+),
+(
   'note-5',
   'variational-inference-dynamical-systems',
   'NOTE',
@@ -233,7 +194,39 @@ values (
   5
 );
 
+-- Insert Note Subsections (Google Docs Outline & Long-Form Content)
 insert into note_sections (note_id, section_anchor_id, title, content, sort_order)
 values
-  ('note-5', 'abstract', 'Abstract', '<div class="p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic"><strong>Abstract —</strong> Continuous-time evidence lower bounds for SDE latent paths.</div>', 1),
-  ('note-5', 'sec-1', '1. Continuous-Time Latent Trajectories & SDEs', '<p>Applying Girsanov change of measure yields exact continuous-time path KL divergence.</p>', 2);
+-- Note 1 Sections
+('note-1', 'abstract', 'Abstract', '<div class="p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic"><strong>Abstract —</strong> How do distributed continuous representations encode structured symbolic hierarchies without suffering exponential explosion in dimensionality? We examine Vector Symbolic Architectures (VSA / Hyperdimensional Computing) and mechanistic transformer interpretability to understand how biological neural circuits and continuous embeddings solve variable binding and compositionality.</div>', 1),
+('note-1', 'sec-1', '1. The Superposition Dilemma & Symbolic Graphs', '<p>Classical symbolic AI represents complex compositions using discrete syntactic parse trees, pointer graphs, and recursive tuples. In biological neural tissue and continuous machine learning architectures, however, everything exists as a dense or sparse vector in high-dimensional hyperspace $\mathbb{R}^D$ where $D \ge 10^4$.</p><p>When multiple concepts are simultaneously activated in the same neural substrate, their raw activation patterns linearly superimpose. Without structured algebra, this leads to the classic <em>binding problem</em>: if the network activates $\text{Circle}$, $\text{Square}$, $\text{Red}$, and $\text{Blue}$, how does downstream circuitry know whether it is perceiving a $\text{Red Circle}$ and $\text{Blue Square}$, or a $\text{Blue Circle}$ and $\text{Red Square}$?</p>', 2),
+('note-1', 'sec-2', '2. Hyperdimensional Computing: Bundling vs. Binding Operations', '<p>Vector Symbolic Architectures (Kanerva, Plate, Gayler) define two fundamental algebraic operations over hyperspace:</p><ul class="list-disc pl-5 space-y-2 my-4 text-neutral-700"><li><strong>Bundling (Superposition):</strong> $\mathbf{C} = \mathbf{A} + \mathbf{B}$. Preserves cosine similarity: $\langle \mathbf{C}, \mathbf{A} \rangle \approx 1$ and $\langle \mathbf{C}, \mathbf{B} \rangle \approx 1$. Acts as set union.</li><li><strong>Binding (Multiplicative / Circular Convolution):</strong> $\mathbf{X} = \mathbf{A} \circledast \mathbf{B}$. Produces a quasiorthogonal vector: $\langle \mathbf{X}, \mathbf{A} \rangle \approx 0$ and $\langle \mathbf{X}, \mathbf{B} \rangle \approx 0$. Preserves unbinding via involution or inverse: $\mathbf{X} \circledast \mathbf{B}^{-1} \approx \mathbf{A}$.</li></ul>', 3),
+('note-1', 'sec-3', '3. Mathematical Proof: Quasi-Orthogonality in Hyperspace', '<p>Let $\mathbf{u}, \mathbf{v} \sim \mathcal{N}(0, \frac{1}{D}\mathbf{I}_D)$ be two independent random vectors uniformly distributed on the unit sphere $\mathbb{S}^{D-1}$. By the Johnson-Lindenstrauss lemma and concentration of measure:</p>$$\mathbb{P}\left(|\langle \mathbf{u}, \mathbf{v} \rangle| \ge \epsilon\right) \le 2\exp\left(-\frac{D\epsilon^2}{2}\right)$$<p>For $D = 10,000$ and $\epsilon = 0.05$, the probability of spurious cross-talk is $\le 10^{-24}$. This enables storing millions of bound variables in linear superposition without catastrophic interference.</p>', 4),
+('note-1', 'sec-4', '4. Transformer Induction Heads as Continuous Variable Binders', '<p>Recent mechanistic interpretability findings (Elhage et al., 2021) demonstrate that two-layer transformer circuits form <em>induction heads</em> that mechanically implement soft variable binding: $$\text{Attn}(Q, K, V) = \text{softmax}\left(\frac{W_Q \mathbf{x}_i (W_K \mathbf{x}_j)^T}{\sqrt{d_k}}\right) W_V \mathbf{x}_j$$</p><p>The $W_{OV}$ circuit acts as a linear projector of the bound feature, while the $W_{QK}$ positional circuit matches previous token representations, functionally equivalent to associative unbinding in high-dimensional algebra.</p>', 5),
+('note-1', 'sec-5', '5. The Capacity Limit of Continuous Superposition', '<p>How many bound pairs $\mathbf{S} = \sum_{k=1}^K \mathbf{R}_k \circledast \mathbf{F}_k$ can be reliably retrieved from a single vector before signal-to-noise ratio degrades below the classification threshold? The exact signal-to-noise ratio is given by: $$\text{SNR} = \frac{D}{K - 1}$$</p><p>To maintain retrieval accuracy $1 - \delta$ across vocabulary $|\mathcal{V}|$, the maximum capacity scales linearly with dimensionality: $$K_{\text{max}} \approx \frac{D}{2 \ln |\mathcal{V}|}$$</p>', 6),
+('note-1', 'sec-6', '6. Open Questions & Speculative Directions', '<p>Are non-abelian gauge group representations necessary for recursive compositional depth? We are currently designing experimental tests utilizing geometric deep learning on Lie algebras $\mathfrak{so}(3)$ to evaluate continuous variable binding in deep reinforcement learning agents.</p>', 7),
+
+-- Note 2 Sections
+('note-2', 'abstract', 'Abstract', '<div class="p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic"><strong>Abstract —</strong> We study non-linear dynamics of loss landscapes in simplified linear attention models, uncovering sharp second-order phase transitions during the formation of in-context induction capabilities.</div>', 1),
+('note-2', 'sec-1', '1. Setup & Toy Architecture', '<p>Consider a 2-layer linear self-attention network without softmax non-linearities trained on $n$-gram Markov chains: $$f(X) = W_2 (W_1 X X^T W_1^T) X$$</p><p>We track spectral decomposition of weight matrices $W_1$ and $W_2$ under continuous gradient flow.</p>', 2),
+('note-2', 'sec-2', '2. Spectral Bifurcation Dynamics', '<p>At critical step $t^* = \frac{1}{\sigma_{\text{min}}} \ln\left(\frac{1}{\eta}\right)$, the dominant singular value undergoes a pitchfork bifurcation: $$\frac{d\sigma_1}{dt} = \sigma_1 (\alpha - \beta \sigma_1^2)$$</p><p>This matches empirical observation of induction head formation across standard LLM training runs.</p>', 3),
+('note-2', 'sec-3', '3. Empirical Verification & Loss Trajectories', '<p>Numerical simulations demonstrate exact power-law scaling in learning rate thresholds, proving that induction head emergence is governed by critical exponents analogous to thermodynamic phase transitions.</p>', 4),
+
+-- Note 3 Sections
+('note-3', 'abstract', 'Abstract', '<div class="p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic"><strong>Abstract —</strong> Quantum state tomography of $N$-qubit density matrices suffers from exponential sample complexity. We formulate a geometric Riemannian prior constraining optimization to the manifold of physical density operators.</div>', 1),
+('note-3', 'sec-1', '1. Reconstructing Density Matrices from Pauli Measurements', '<p>Quantum state tomography requires determining the complex density operator $\rho$ satisfying $\text{Tr}(\rho) = 1$ and $\rho \succeq 0$. Standard maximum likelihood methods frequently violate positive semi-definiteness under finite shot noise without computationally prohibitive semidefinite eigenvalue constraints.</p>', 2),
+('note-3', 'sec-2', '2. Riemannian Quotient Manifold Formulation', '<p>By factorizing $\rho = Y Y^\dagger$ where $Y \in \mathbb{C}^{d \times r}$, the state space is modeled natively on the quotient manifold $\mathcal{M} = \mathbb{C}_*^{d \times r} / \mathcal{U}(r)$. The Riemannian gradient takes the exact form: $$\text{grad}_{\mathcal{M}} f(Y) = 2 \left( \nabla f(Y Y^\dagger) \right) Y - Y (Y^\dagger Y)^{-1} Y^\dagger (\nabla f) Y$$</p>', 3),
+('note-3', 'sec-3', '3. Geodesic Optimization & Numerical Convergence', '<p>Geodesic updates follow the matrix exponential map along the horizontal subspace of the tangent space, guaranteeing physical validity at every step while achieving $3.4\times$ sample efficiency gains over standard maximum likelihood estimation.</p>', 4),
+
+-- Note 4 Sections (Updated with 5 Comprehensive Sections)
+('note-4', 'abstract', 'Abstract', '<div class="p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic"><strong>Abstract —</strong> We examine why neural networks fail to learn all available predictive features equally. During empirical risk minimization with cross-entropy loss, gradient descent prioritizes easily separable statistical shortcuts. As classification confidence approaches saturation, the vanishing gradient signal starves remaining robust core features, precipitating catastrophic performance collapse when exposed to out-of-distribution (OOD) shifts.</div>', 1),
+('note-4', 'sec-1', '1. Neural Networks Have a Learning Bias', '<p>Neural networks do not learn all available features equally. During training, gradient descent naturally tends to prioritize features that are easier or stronger predictors of the target.</p><p>Imagine training a visual classifier to recognize cows. The input images contain multiple signals:</p><ul class="list-disc pl-5 space-y-1 my-3 text-neutral-700"><li><strong>Cow shape & anatomy</strong></li><li><strong>Green grass</strong> (high-contrast background)</li><li><strong>Sky</strong> and atmospheric tint</li><li><strong>Dominant background color palette</strong></li></ul><p>Suppose almost every cow image in the training dataset happens to contain lush green grass. The optimization trajectory discovers:</p><div class="my-4 p-3 bg-neutral-50 border-l-2 border-neutral-800 font-mono text-xs text-neutral-800">Green background &rarr; Cow &nbsp;&nbsp;(learned rapidly)<br>Shape / Texture &rarr; Cow &nbsp;&nbsp;&nbsp;&nbsp;(requires complex spatial composition)</div><p>Because the background color is an easy, low-frequency predictive signal, gradient descent gives it absolute priority. The model is not explicitly instructed which feature to rely on; optimization dictates feature utility based purely on which signals reduce empirical loss fastest.</p>', 2),
+('note-4', 'sec-2', '2. Cross-Entropy Can Create Gradient Starvation', '<p>When training with cross-entropy loss, the loss function creates an insidious feature competition dynamic known as <strong>gradient starvation</strong>.</p><p>Suppose the model initially makes an uncertain prediction:</p><div class="my-3 p-3 bg-neutral-50 rounded font-mono text-xs text-neutral-700">Actual: Cat<br>Prediction: 55% Cat &nbsp;&rarr;&nbsp; High Loss &nbsp;&rarr;&nbsp; Strong Gradient &nabla;L</div><p>There is still a significant residual error, so the network receives large gradients and continues exploring multiple representation subspaces. However, as the easy shortcut feature is learned, prediction confidence surges:</p><div class="my-3 p-3 bg-neutral-50 rounded font-mono text-xs text-neutral-700">Actual: Cat<br>Prediction: 99.9% Cat &nbsp;&rarr;&nbsp; Loss &approx; 0 &nbsp;&rarr;&nbsp; Gradient &nabla;L &approx; 0</div><p>The optimization dynamics stall:</p><div class="my-4 p-4 bg-neutral-50 border border-neutral-200 rounded font-mono text-xs leading-loose text-neutral-800 text-center"><span class="font-bold">Strong easy feature</span> &rarr; <span class="font-bold">Confidence surges</span> &rarr; <span class="font-bold">Loss &darr;</span> &rarr; <span class="font-bold">Gradient &darr;</span> &rarr; <span class="font-bold">Remaining features starved of gradient signal</span></div><p>The problem is not that the other structural features (like whiskers, ear shapes, and anatomy) are uninformative; rather, the network <em>exhausts its gradient budget</em> before discovering them.</p>', 3),
+('note-4', 'sec-3', '3. A Model Can Learn a Shortcut Without Memorizing Data', '<p>A common misconception in machine learning is that if a model relies on spurious cues, it must be overfitting or memorizing the training samples. <strong>This is not necessarily true.</strong></p><p>A network can learn a genuine, mathematically sound statistical correlation that holds true across the entire training distribution, yet represents the wrong conceptual invariant:</p><div class="my-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono"><div class="p-3 bg-neutral-50 border border-neutral-200 rounded"><strong>Training Distribution:</strong><br>Wolf &rarr; Snow background<br>Dog &rarr; Grass background</div><div class="p-3 bg-neutral-50 border border-neutral-200 rounded"><strong>Discovered Shortcut:</strong><br>Snow &rarr; Wolf<br>Grass &rarr; Dog</div></div><p>This is not memorization&mdash;the model generalized a statistical regularity present throughout the dataset. However, under environment intervention:</p><div class="my-3 p-3 bg-red-50/60 border border-red-200 rounded text-xs font-mono text-neutral-800">Wolf on Grass &rarr; Misclassified as Dog<br>Dog on Snow &rarr; Misclassified as Wolf</div><p>The model learned <code>Image &rarr; Background &rarr; Prediction</code> instead of <code>Image &rarr; Animal Characteristics &rarr; Prediction</code>. A shortcut can be statistically valid on the training distribution while remaining a flawed representation of the underlying task.</p>', 4),
+('note-4', 'sec-4', '4. High Training Accuracy Isn''t Enough', '<p>Evaluating models purely on scalar metrics like Accuracy, Loss, or F1-Score obscures what internal representations the network actually constructed.</p><p>Consider two competing architectures:</p><div class="my-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono"><div class="p-3 bg-neutral-50 border border-neutral-200 rounded"><strong>Model A:</strong><br>Train Acc: 99% &nbsp;|&nbsp; Test Acc: 95%<br><em>Learned:</em> Background context &rarr; Class</div><div class="p-3 bg-neutral-50 border border-neutral-200 rounded"><strong>Model B:</strong><br>Train Acc: 98% &nbsp;|&nbsp; Test Acc: 96%<br><em>Learned:</em> Shape + Texture &rarr; Class</div></div><p>Standard benchmarks favor Model A. Yet when the background context shifts:</p><div class="my-3 p-3 bg-neutral-50 rounded text-xs font-mono">Model A performance collapses: 99% &rarr; 40%<br>Model B remains resilient: &nbsp;&nbsp;&nbsp; 98% &rarr; 93%</div><p class="font-medium text-black mt-3">Core Principle: A model can be right for the wrong reason.</p>', 5),
+('note-4', 'sec-5', '5. Gradient Starvation Can Hurt OOD Generalization', '<p><strong>Out-of-Distribution (OOD)</strong> generalization measures how robustly a model behaves when real-world deployment data differs from the training distribution.</p><p>When a network is trained on correlated data (e.g., <em>Cow + Green grass</em>), the gradient starvation mechanism locks in the background shortcut:</p><div class="my-4 p-4 bg-neutral-50 border border-neutral-200 rounded font-mono text-xs leading-relaxed text-neutral-800 space-y-1.5"><div>1. Easy feature learns rapidly</div><div>2. Prediction confidence peaks &rarr; Gradient disappears</div><div>3. Morphological & invariant features remain unlearned</div><div>4. Model dependencies solidify around the shortcut</div><div>5. Environment shifts (Cow in Desert / Mountain / Snow)</div><div>6. Shortcut vanishes &rarr; <strong>OOD performance collapses</strong></div></div><p>Mitigating gradient starvation requires regularizers such as spectral decoupling, feature-dropout, and invariant risk minimization to force gradient flow into higher-order geometric representations.</p>', 6),
+
+-- Note 5 Sections
+('note-5', 'abstract', 'Abstract', '<div class="p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic"><strong>Abstract —</strong> We formulate continuous-time evidence lower bounds for latent paths governed by stochastic differential equations using Girsanov''s theorem and adjoint state backpropagation.</div>', 1),
+('note-5', 'sec-1', '1. Continuous-Time Latent Trajectories & SDEs', '<p>Consider a latent continuous process $\mathbf{z}_t$ governed by: $$d\mathbf{z}_t = f_\theta(\mathbf{z}_t, t)dt + g(t)d\mathbf{w}_t$$</p><p>Applying Girsanov''s change of measure yields the exact continuous-time path KL divergence: $$\mathcal{D}_{\text{KL}}(q \,\|\, p) = \frac{1}{2} \mathbb{E}_q \left[ \int_0^T \left\| \frac{f_\theta(\mathbf{z}_t, t) - u_\phi(\mathbf{z}_t, t)}{g(t)} \right\|^2 dt \right]$$</p>', 2),
+('note-5', 'sec-2', '2. Adjoint State Backpropagation & O(1) Memory', '<p>By integrating the continuous adjoint system in reverse time, parameter gradients are computed with $O(1)$ memory complexity regardless of the temporal discretization grid.</p>', 3);
