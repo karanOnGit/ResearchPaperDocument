@@ -3,7 +3,7 @@ import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { supabase } from './supabase.js';
 import dotenv from 'dotenv';
@@ -16,18 +16,18 @@ const app = new Hono();
 app.use('*', logger());
 app.use('*', cors({
   origin: '*',
-  allowMethods: ['GET', 'POST', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization']
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization', 'x-secret-pin']
 }));
 
-// Local fallback database from content.json
+// Local database state from content.json
 let localData = null;
+const CONTENT_PATH = resolve('./content.json');
 
 function loadLocalData() {
   try {
-    const filePath = resolve('./content.json');
-    if (existsSync(filePath)) {
-      const raw = readFileSync(filePath, 'utf-8');
+    if (existsSync(CONTENT_PATH)) {
+      const raw = readFileSync(CONTENT_PATH, 'utf-8');
       localData = JSON.parse(raw);
     }
   } catch (err) {
@@ -36,11 +36,33 @@ function loadLocalData() {
 }
 loadLocalData();
 
+function saveLocalData() {
+  try {
+    writeFileSync(CONTENT_PATH, JSON.stringify(localData, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Error saving content.json:', err);
+  }
+}
+
+// Secret PIN Auth Verification middleware/helper
+const SECRET_PIN = process.env.ADMIN_PIN || '1107';
+
+function verifyAdmin(c) {
+  const pinHeader = c.req.header('x-secret-pin');
+  const authHeader = c.req.header('Authorization');
+  return pinHeader === SECRET_PIN || authHeader === `Bearer ${SECRET_PIN}`;
+}
+
 // ==========================================
-// API Endpoints with Supabase Integration
+// Dashboard & HTML Route
+// ==========================================
+app.get('/dashboard', serveStatic({ path: './dashboard.html' }));
+
+// ==========================================
+// API Endpoints
 // ==========================================
 
-// 1. Health Check & Supabase Status
+// 1. Health Check
 app.get('/health', async (c) => {
   let supabaseConnected = false;
   if (supabase) {
@@ -64,7 +86,28 @@ app.get('/health', async (c) => {
   });
 });
 
-// 2. Full Portfolio Bundle: GET /api/portfolio
+// 2. Secret PIN Verification: POST /api/verify-pin
+app.post('/api/verify-pin', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const { pin } = body;
+
+  if (pin === SECRET_PIN) {
+    return c.json({
+      status: 'success',
+      authenticated: true,
+      token: SECRET_PIN,
+      message: 'Access granted'
+    });
+  }
+
+  return c.json({
+    status: 'error',
+    authenticated: false,
+    message: 'Invalid secret PIN'
+  }, 401);
+});
+
+// 3. Full Portfolio Bundle: GET /api/portfolio
 app.get('/api/portfolio', async (c) => {
   if (supabase) {
     try {
@@ -73,13 +116,12 @@ app.get('/api/portfolio', async (c) => {
         supabase.from('portfolio_hero').select('*').limit(1).maybeSingle(),
         supabase.from('portfolio_about').select('*').limit(1).maybeSingle(),
         supabase.from('notes').select(`
-          id, slug, type, date, formatted_date, read_time, tags, title, summary, subtitle, sort_order,
+          id, slug, type, date, formatted_date, read_time, tags, title, summary, subtitle, published, sort_order,
           sections:note_sections(id:section_anchor_id, title, content, sort_order)
-        `).eq('published', true).order('sort_order', { ascending: true })
+        `).order('sort_order', { ascending: true })
       ]);
 
       if (notesRes.data && notesRes.data.length > 0) {
-        // Format notes with sorted sections
         const notes = notesRes.data.map(n => ({
           id: n.id,
           slug: n.slug,
@@ -91,6 +133,7 @@ app.get('/api/portfolio', async (c) => {
           title: n.title,
           summary: n.summary,
           subtitle: n.subtitle,
+          published: n.published !== false,
           sections: (n.sections || []).sort((a, b) => a.sort_order - b.sort_order)
         }));
 
@@ -123,11 +166,10 @@ app.get('/api/portfolio', async (c) => {
         });
       }
     } catch (err) {
-      console.warn('Supabase query failed, falling back to local data:', err.message);
+      console.warn('Supabase query fallback:', err.message);
     }
   }
 
-  // Fallback to local json data
   return c.json({
     status: 'success',
     source: 'local_cache',
@@ -135,75 +177,12 @@ app.get('/api/portfolio', async (c) => {
   });
 });
 
-// 3. Metadata: GET /api/meta
-app.get('/api/meta', async (c) => {
-  if (supabase) {
-    const { data } = await supabase.from('portfolio_meta').select('*').limit(1).maybeSingle();
-    if (data) {
-      return c.json({
-        status: 'success',
-        source: 'supabase',
-        data: {
-          authorName: data.author_name,
-          logoText: data.logo_text,
-          avatarUrl: data.avatar_url,
-          pageTitle: data.page_title,
-          metaDescription: data.meta_description,
-          copyrightYear: data.copyright_year,
-          socialLinks: data.social_links
-        }
-      });
-    }
-  }
-  return c.json({ status: 'success', source: 'local_cache', data: localData?.meta });
-});
-
-// 4. Hero Section: GET /api/hero
-app.get('/api/hero', async (c) => {
-  if (supabase) {
-    const { data } = await supabase.from('portfolio_hero').select('*').limit(1).maybeSingle();
-    if (data) {
-      return c.json({
-        status: 'success',
-        source: 'supabase',
-        data: {
-          heading: data.heading,
-          bioHighlight: data.bio_highlight,
-          bioIntro: data.bio_intro,
-          moreAboutText: data.more_about_text,
-          moreAboutAnchor: data.more_about_anchor
-        }
-      });
-    }
-  }
-  return c.json({ status: 'success', source: 'local_cache', data: localData?.hero });
-});
-
-// 5. About Section: GET /api/about
-app.get('/api/about', async (c) => {
-  if (supabase) {
-    const { data } = await supabase.from('portfolio_about').select('*').limit(1).maybeSingle();
-    if (data) {
-      return c.json({
-        status: 'success',
-        source: 'supabase',
-        data: {
-          sectionLabel: data.section_label,
-          paragraphs: data.paragraphs
-        }
-      });
-    }
-  }
-  return c.json({ status: 'success', source: 'local_cache', data: localData?.about });
-});
-
-// 6. Notes Summary List for Landing Page: GET /api/notes
+// 4. Notes List: GET /api/notes
 app.get('/api/notes', async (c) => {
   if (supabase) {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('notes')
-      .select('id, slug, type, date, formatted_date, read_time, tags, title, summary, sort_order')
-      .eq('published', true)
+      .select('id, slug, type, date, formatted_date, read_time, tags, title, summary, published, sort_order')
       .order('sort_order', { ascending: true });
 
     if (data && data.length > 0) {
@@ -216,7 +195,8 @@ app.get('/api/notes', async (c) => {
         readTime: n.read_time,
         tags: n.tags || [],
         title: n.title,
-        summary: n.summary
+        summary: n.summary,
+        published: n.published !== false
       }));
       return c.json({ status: 'success', source: 'supabase', count: formatted.length, data: formatted });
     }
@@ -226,7 +206,7 @@ app.get('/api/notes', async (c) => {
   return c.json({ status: 'success', source: 'local_cache', count: summaries.length, data: summaries });
 });
 
-// 7. Single Research Note with Full Google Docs Sections: GET /api/notes/:id
+// 5. Single Note: GET /api/notes/:id
 app.get('/api/notes/:id', async (c) => {
   const idOrSlug = c.req.param('id');
 
@@ -234,7 +214,7 @@ app.get('/api/notes/:id', async (c) => {
     const { data: note } = await supabase
       .from('notes')
       .select(`
-        id, slug, type, date, formatted_date, read_time, tags, title, summary, subtitle,
+        id, slug, type, date, formatted_date, read_time, tags, title, summary, subtitle, published,
         sections:note_sections(id:section_anchor_id, title, content, sort_order)
       `)
       .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
@@ -255,6 +235,7 @@ app.get('/api/notes/:id', async (c) => {
           title: note.title,
           summary: note.summary,
           subtitle: note.subtitle,
+          published: note.published !== false,
           sections: (note.sections || []).sort((a, b) => a.sort_order - b.sort_order)
         }
       });
@@ -269,7 +250,219 @@ app.get('/api/notes/:id', async (c) => {
   return c.json({ status: 'error', message: `Note '${idOrSlug}' not found` }, 404);
 });
 
-// 8. JSON Schema endpoint: GET /api/schema
+// ==========================================
+// Mutation Endpoints (Protected by Secret PIN)
+// ==========================================
+
+// Create Note: POST /api/notes
+app.post('/api/notes', async (c) => {
+  if (!verifyAdmin(c)) return c.json({ status: 'error', message: 'Unauthorized' }, 401);
+
+  const note = await c.req.json();
+  if (!note.id || !note.title) {
+    return c.json({ status: 'error', message: 'Note id and title are required' }, 400);
+  }
+
+  // Update Supabase if available
+  if (supabase) {
+    try {
+      await supabase.from('notes').upsert({
+        id: note.id,
+        slug: note.slug || note.id,
+        type: note.type || 'NOTE',
+        date: note.date || new Date().toISOString().split('T')[0],
+        formatted_date: note.formattedDate || note.date,
+        read_time: note.readTime || '15 min',
+        tags: note.tags || [],
+        title: note.title,
+        summary: note.summary || '',
+        subtitle: note.subtitle || '',
+        published: note.published !== false,
+        sort_order: note.sort_order || 0
+      });
+
+      if (Array.isArray(note.sections)) {
+        await supabase.from('note_sections').delete().eq('note_id', note.id);
+        const sectionsToInsert = note.sections.map((sec, idx) => ({
+          note_id: note.id,
+          section_anchor_id: sec.id,
+          title: sec.title,
+          content: sec.content,
+          sort_order: idx + 1
+        }));
+        if (sectionsToInsert.length > 0) {
+          await supabase.from('note_sections').insert(sectionsToInsert);
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase insert note error:', e);
+    }
+  }
+
+  // Update local content.json
+  if (!localData.notes) localData.notes = [];
+  const existingIdx = localData.notes.findIndex(n => n.id === note.id);
+  if (existingIdx >= 0) {
+    localData.notes[existingIdx] = note;
+  } else {
+    localData.notes.push(note);
+  }
+  saveLocalData();
+
+  return c.json({ status: 'success', message: 'Note created successfully', data: note });
+});
+
+// Update Note: PUT /api/notes/:id
+app.put('/api/notes/:id', async (c) => {
+  if (!verifyAdmin(c)) return c.json({ status: 'error', message: 'Unauthorized' }, 401);
+
+  const id = c.req.param('id');
+  const updatedData = await c.req.json();
+
+  if (supabase) {
+    try {
+      await supabase.from('notes').update({
+        slug: updatedData.slug || id,
+        type: updatedData.type || 'NOTE',
+        date: updatedData.date,
+        formatted_date: updatedData.formattedDate || updatedData.date,
+        read_time: updatedData.readTime || '15 min',
+        tags: updatedData.tags || [],
+        title: updatedData.title,
+        summary: updatedData.summary || '',
+        subtitle: updatedData.subtitle || '',
+        published: updatedData.published !== false
+      }).eq('id', id);
+
+      if (Array.isArray(updatedData.sections)) {
+        await supabase.from('note_sections').delete().eq('note_id', id);
+        const sectionsToInsert = updatedData.sections.map((sec, idx) => ({
+          note_id: id,
+          section_anchor_id: sec.id,
+          title: sec.title,
+          content: sec.content,
+          sort_order: idx + 1
+        }));
+        if (sectionsToInsert.length > 0) {
+          await supabase.from('note_sections').insert(sectionsToInsert);
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase update note error:', e);
+    }
+  }
+
+  if (localData?.notes) {
+    const idx = localData.notes.findIndex(n => n.id === id);
+    if (idx >= 0) {
+      localData.notes[idx] = { ...localData.notes[idx], ...updatedData, id };
+      saveLocalData();
+    }
+  }
+
+  return c.json({ status: 'success', message: 'Note updated successfully' });
+});
+
+// Delete Note: DELETE /api/notes/:id
+app.delete('/api/notes/:id', async (c) => {
+  if (!verifyAdmin(c)) return c.json({ status: 'error', message: 'Unauthorized' }, 401);
+
+  const id = c.req.param('id');
+
+  if (supabase) {
+    try {
+      await supabase.from('notes').delete().eq('id', id);
+    } catch (e) {
+      console.warn('Supabase delete note error:', e);
+    }
+  }
+
+  if (localData?.notes) {
+    localData.notes = localData.notes.filter(n => n.id !== id);
+    saveLocalData();
+  }
+
+  return c.json({ status: 'success', message: `Note '${id}' deleted successfully` });
+});
+
+// Update Metadata: PUT /api/meta
+app.put('/api/meta', async (c) => {
+  if (!verifyAdmin(c)) return c.json({ status: 'error', message: 'Unauthorized' }, 401);
+
+  const meta = await c.req.json();
+  if (supabase) {
+    try {
+      await supabase.from('portfolio_meta').upsert({
+        id: 'main',
+        author_name: meta.authorName,
+        logo_text: meta.logoText,
+        avatar_url: meta.avatarUrl,
+        page_title: meta.pageTitle,
+        meta_description: meta.metaDescription,
+        copyright_year: meta.copyrightYear,
+        social_links: meta.socialLinks || []
+      });
+    } catch (e) {
+      console.warn('Supabase update meta error:', e);
+    }
+  }
+
+  localData.meta = { ...localData.meta, ...meta };
+  saveLocalData();
+
+  return c.json({ status: 'success', message: 'Metadata updated successfully', data: localData.meta });
+});
+
+// Update Hero: PUT /api/hero
+app.put('/api/hero', async (c) => {
+  if (!verifyAdmin(c)) return c.json({ status: 'error', message: 'Unauthorized' }, 401);
+
+  const hero = await c.req.json();
+  if (supabase) {
+    try {
+      await supabase.from('portfolio_hero').upsert({
+        id: 'main',
+        heading: hero.heading,
+        bio_highlight: hero.bioHighlight,
+        bio_intro: hero.bioIntro,
+        more_about_text: hero.moreAboutText,
+        more_about_anchor: hero.moreAboutAnchor
+      });
+    } catch (e) {
+      console.warn('Supabase update hero error:', e);
+    }
+  }
+
+  localData.hero = { ...localData.hero, ...hero };
+  saveLocalData();
+
+  return c.json({ status: 'success', message: 'Hero updated successfully', data: localData.hero });
+});
+
+// Update About: PUT /api/about
+app.put('/api/about', async (c) => {
+  if (!verifyAdmin(c)) return c.json({ status: 'error', message: 'Unauthorized' }, 401);
+
+  const about = await c.req.json();
+  if (supabase) {
+    try {
+      await supabase.from('portfolio_about').upsert({
+        id: 'main',
+        section_label: about.sectionLabel,
+        paragraphs: about.paragraphs
+      });
+    } catch (e) {
+      console.warn('Supabase update about error:', e);
+    }
+  }
+
+  localData.about = { ...localData.about, ...about };
+  saveLocalData();
+
+  return c.json({ status: 'success', message: 'About updated successfully', data: localData.about });
+});
+
+// JSON Schema endpoint: GET /api/schema
 app.get('/api/schema', (c) => {
   try {
     const schemaRaw = readFileSync(resolve('./schema.json'), 'utf-8');

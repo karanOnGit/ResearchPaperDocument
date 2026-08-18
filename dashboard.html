@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Academic Notebook</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- KaTeX for previewing math in dashboard -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .shake {
+      animation: shake 0.35s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    .otp-input:focus {
+      border-color: #000000;
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+    }
+    /* KaTeX display blocks */
+    .katex-display {
+      margin: 0.8em 0 !important;
+      padding: 0.5em 0.8em;
+      background: #fafafa;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-[#fafafa] text-neutral-900 font-sans min-h-screen antialiased">
+
+  <!-- ========================================================================= -->
+  <!-- 1. 4-DIGIT OTP SECRET KEY LOCK SCREEN                                      -->
+  <!-- ========================================================================= -->
+  <div id="lock-screen" class="fixed inset-0 bg-white z-50 flex items-center justify-center p-6">
+    <div class="max-w-md w-full text-center">
+      
+      <!-- Key Icon / Branding -->
+      <div class="w-12 h-12 rounded-full border border-neutral-200 bg-neutral-50 mx-auto flex items-center justify-center text-neutral-700 mb-6">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </div>
+
+      <h1 class="text-2xl font-bold tracking-tight text-black">Admin Authentication</h1>
+      <p class="text-xs font-mono text-neutral-500 mt-2">Enter 4-digit secret key to access dashboard</p>
+
+      <!-- 4 OTP Input Boxes -->
+      <form id="otp-form" onsubmit="handleOtpSubmit(event)" class="mt-8">
+        <div id="otp-container" class="flex justify-center gap-3.5 sm:gap-4">
+          <input type="password" maxlength="1" pattern="[0-9]*" inputmode="numeric" class="otp-input w-13 h-14 sm:w-14 sm:h-16 text-center text-2xl font-mono font-semibold border-2 border-neutral-200 rounded-lg outline-none bg-white transition-all" autocomplete="off" autofocus>
+          <input type="password" maxlength="1" pattern="[0-9]*" inputmode="numeric" class="otp-input w-13 h-14 sm:w-14 sm:h-16 text-center text-2xl font-mono font-semibold border-2 border-neutral-200 rounded-lg outline-none bg-white transition-all" autocomplete="off">
+          <input type="password" maxlength="1" pattern="[0-9]*" inputmode="numeric" class="otp-input w-13 h-14 sm:w-14 sm:h-16 text-center text-2xl font-mono font-semibold border-2 border-neutral-200 rounded-lg outline-none bg-white transition-all" autocomplete="off">
+          <input type="password" maxlength="1" pattern="[0-9]*" inputmode="numeric" class="otp-input w-13 h-14 sm:w-14 sm:h-16 text-center text-2xl font-mono font-semibold border-2 border-neutral-200 rounded-lg outline-none bg-white transition-all" autocomplete="off">
+        </div>
+
+        <p id="error-msg" class="text-xs font-mono text-red-500 mt-4 min-h-[1rem] opacity-0 transition-opacity"></p>
+
+        <button type="submit" class="mt-4 w-full py-3 bg-black hover:bg-neutral-800 text-white text-xs font-mono font-medium rounded-lg transition-colors">
+          Verify & Unlock →
+        </button>
+
+        <div class="mt-6 text-xs text-neutral-400">
+          <a href="/" class="hover:text-black transition-colors">← Back to public portfolio</a>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 2. ADMIN DASHBOARD CONTENT VIEW                                           -->
+  <!-- ========================================================================= -->
+  <div id="dashboard-view" class="hidden min-h-screen flex flex-col">
+    
+    <!-- Top Navbar -->
+    <header class="bg-white border-b border-neutral-200 sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <span class="text-base font-bold tracking-tight">Karan</span>
+          <span class="text-xs font-mono text-neutral-400">/</span>
+          <span class="text-xs font-mono font-medium bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded">CMS Dashboard</span>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div id="supabase-badge" class="flex items-center gap-1.5 text-[11px] font-mono text-neutral-500 bg-neutral-50 border border-neutral-200 px-2.5 py-1 rounded-full">
+            <span class="w-2 h-2 rounded-full bg-amber-400" id="db-indicator"></span>
+            <span id="db-status-text">Checking database...</span>
+          </div>
+
+          <a href="/" target="_blank" class="text-xs font-mono text-neutral-600 hover:text-black transition-colors flex items-center gap-1">
+            <span>View Site</span>
+            <span class="text-[10px]">↗</span>
+          </a>
+
+          <button onclick="lockDashboard()" class="text-xs font-mono text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded transition-colors" title="Lock session">
+            Lock
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="bg-white border-b border-neutral-200">
+      <div class="max-w-7xl mx-auto px-6 flex gap-8">
+        <button onclick="switchTab('notes')" id="tab-btn-notes" class="py-3.5 text-xs font-mono font-medium border-b-2 border-black text-black transition-colors">
+          Research Notes (<span id="notes-count">0</span>)
+        </button>
+        <button onclick="switchTab('profile')" id="tab-btn-profile" class="py-3.5 text-xs font-mono font-medium border-b-2 border-transparent text-neutral-500 hover:text-black transition-colors">
+          Profile & Hero
+        </button>
+        <button onclick="switchTab('about')" id="tab-btn-about" class="py-3.5 text-xs font-mono font-medium border-b-2 border-transparent text-neutral-500 hover:text-black transition-colors">
+          About & Focus
+        </button>
+        <button onclick="switchTab('raw')" id="tab-btn-raw" class="py-3.5 text-xs font-mono font-medium border-b-2 border-transparent text-neutral-500 hover:text-black transition-colors">
+          Raw JSON & Sync
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-6 py-8 flex-grow w-full">
+
+      <!-- ===================================================================== -->
+      <!-- TAB 1: RESEARCH NOTES MANAGER                                         -->
+      <!-- ===================================================================== -->
+      <section id="tab-notes" class="space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-black tracking-tight">Research Notes & Papers</h2>
+            <p class="text-xs text-neutral-500 mt-0.5">Manage essays, notes, and full-page Google Docs outline subsections</p>
+          </div>
+          <button onclick="openNoteModal('new')" class="bg-black hover:bg-neutral-800 text-white text-xs font-mono px-4 py-2.5 rounded-md transition-colors flex items-center gap-1.5">
+            <span>+</span>
+            <span>New Research Note</span>
+          </button>
+        </div>
+
+        <!-- Notes Table -->
+        <div class="bg-white border border-neutral-200 rounded-lg overflow-hidden shadow-sm">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-neutral-50 border-b border-neutral-200 text-neutral-500 font-mono">
+              <tr>
+                <th class="py-3.5 px-4">Type</th>
+                <th class="py-3.5 px-4">Title</th>
+                <th class="py-3.5 px-4">Date</th>
+                <th class="py-3.5 px-4">Subsections</th>
+                <th class="py-3.5 px-4">Status</th>
+                <th class="py-3.5 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="notes-table-body" class="divide-y divide-neutral-100">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- TAB 2: PROFILE & HERO SETTINGS                                        -->
+      <!-- ===================================================================== -->
+      <section id="tab-profile" class="hidden max-w-3xl space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-black tracking-tight">Profile & Hero Settings</h2>
+          <p class="text-xs text-neutral-500 mt-0.5">Customize site branding, pencil sketch avatar, and hero text</p>
+        </div>
+
+        <form id="profile-form" onsubmit="saveProfileSettings(event)" class="bg-white border border-neutral-200 rounded-lg p-6 space-y-6 shadow-sm">
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-mono text-neutral-500 mb-1">Author Name</label>
+              <input type="text" id="meta-author-name" class="w-full text-xs font-mono border border-neutral-200 rounded p-2.5 outline-none focus:border-black" required>
+            </div>
+            <div>
+              <label class="block text-xs font-mono text-neutral-500 mb-1">Logo Text (Top-Left)</label>
+              <input type="text" id="meta-logo-text" class="w-full text-xs font-mono border border-neutral-200 rounded p-2.5 outline-none focus:border-black" required>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-mono text-neutral-500 mb-1">Pencil Sketch Avatar URL (Top-Right)</label>
+              <input type="text" id="meta-avatar-url" class="w-full text-xs font-mono border border-neutral-200 rounded p-2.5 outline-none focus:border-black" required>
+            </div>
+            <div>
+              <label class="block text-xs font-mono text-neutral-500 mb-1">Copyright Year</label>
+              <input type="number" id="meta-copyright-year" class="w-full text-xs font-mono border border-neutral-200 rounded p-2.5 outline-none focus:border-black" required>
+            </div>
+          </div>
+
+          <div class="border-t border-neutral-100 pt-5 space-y-4">
+            <h3 class="text-xs font-mono font-semibold uppercase text-neutral-400">Hero Section Content</h3>
+            <div>
+              <label class="block text-xs font-mono text-neutral-500 mb-1">Main Heading</label>
+              <input type="text" id="hero-heading-input" class="w-full text-sm font-semibold border border-neutral-200 rounded p-2.5 outline-none focus:border-black" required>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-mono text-neutral-500 mb-1">Bio Highlight (Name)</label>
+                <input type="text" id="hero-highlight-input" class="w-full text-xs font-mono border border-neutral-200 rounded p-2.5 outline-none focus:border-black" required>
+              </div>
+              <div>
+                <label class="block text-xs font-mono text-neutral-500 mb-1">More About Link Text</label>
+                <input type="text" id="hero-more-text-input" class="w-full text-xs font-mono border border-neutral-200 rounded p-2.5 outline-none focus:border-black" required>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-mono text-neutral-500 mb-1">Bio Intro Body</label>
+              <textarea id="hero-intro-input" rows="2" class="w-full text-xs font-sans border border-neutral-200 rounded p-2.5 outline-none focus:border-black" required></textarea>
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-2">
+            <button type="submit" class="bg-black hover:bg-neutral-800 text-white text-xs font-mono px-5 py-2.5 rounded transition-colors">
+              Save Profile & Hero
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- TAB 3: ABOUT & RESEARCH FOCUS                                         -->
+      <!-- ===================================================================== -->
+      <section id="tab-about" class="hidden max-w-3xl space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-black tracking-tight">About & Focus Paragraphs</h2>
+          <p class="text-xs text-neutral-500 mt-0.5">Manage reflective academic focus paragraphs on landing page</p>
+        </div>
+
+        <form id="about-form" onsubmit="saveAboutSettings(event)" class="bg-white border border-neutral-200 rounded-lg p-6 space-y-5 shadow-sm">
+          <div>
+            <label class="block text-xs font-mono text-neutral-500 mb-1">Section Label</label>
+            <input type="text" id="about-section-label" class="w-full text-xs font-mono border border-neutral-200 rounded p-2.5 outline-none focus:border-black" required>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-xs font-mono text-neutral-500">Paragraphs</label>
+              <button type="button" onclick="addAboutParagraph('')" class="text-xs font-mono text-neutral-600 hover:text-black transition-colors">
+                + Add Paragraph
+              </button>
+            </div>
+            <div id="about-paragraphs-list" class="space-y-3">
+              <!-- Dynamic paragraph inputs -->
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-3 border-t border-neutral-100">
+            <button type="submit" class="bg-black hover:bg-neutral-800 text-white text-xs font-mono px-5 py-2.5 rounded transition-colors">
+              Save About Paragraphs
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- TAB 4: RAW JSON & SYNC                                                -->
+      <!-- ===================================================================== -->
+      <section id="tab-raw" class="hidden space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-black tracking-tight">Database Payload & Export</h2>
+            <p class="text-xs text-neutral-500 mt-0.5">Direct live JSON synchronization</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="fetchPortfolioData()" class="bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-mono px-3.5 py-2 rounded transition-colors">
+              ↻ Refresh Data
+            </button>
+            <button onclick="downloadJsonBackup()" class="bg-black hover:bg-neutral-800 text-white text-xs font-mono px-3.5 py-2 rounded transition-colors">
+              Download JSON Backup
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-neutral-900 text-neutral-100 rounded-lg p-5 font-mono text-xs overflow-x-auto max-h-[600px]">
+          <pre id="raw-json-display">// Loading JSON...</pre>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 3. RESEARCH NOTE EDIT / CREATE MODAL                                       -->
+  <!-- ========================================================================= -->
+  <div id="note-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl max-w-4xl w-full my-8 border border-neutral-200 shadow-2xl flex flex-col max-h-[90vh]">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-neutral-100 flex items-center justify-between sticky top-0 bg-white z-10">
+        <h3 id="modal-title" class="text-base font-bold text-black">Edit Research Note</h3>
+        <button onclick="closeNoteModal()" class="text-neutral-400 hover:text-black text-xl leading-none">&times;</button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <form id="note-form" onsubmit="saveNote(event)" class="p-6 space-y-6 overflow-y-auto">
+        <input type="hidden" id="note-edit-id">
+
+        <!-- Top Row Metadata -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-mono text-neutral-500 mb-1">ID (Slug Anchor)</label>
+            <input type="text" id="note-id-input" class="w-full text-xs font-mono border border-neutral-200 rounded p-2 outline-none focus:border-black" placeholder="note-1" required>
+          </div>
+          <div>
+            <label class="block text-xs font-mono text-neutral-500 mb-1">Type</label>
+            <select id="note-type-input" class="w-full text-xs font-mono border border-neutral-200 rounded p-2 outline-none focus:border-black">
+              <option value="ESSAY">ESSAY</option>
+              <option value="NOTE">NOTE</option>
+              <option value="LOG">LOG</option>
+              <option value="PAPER">PAPER</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-mono text-neutral-500 mb-1">Publication Date</label>
+            <input type="date" id="note-date-input" class="w-full text-xs font-mono border border-neutral-200 rounded p-2 outline-none focus:border-black" required>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono text-neutral-500 mb-1">Title</label>
+          <input type="text" id="note-title-input" class="w-full text-sm font-semibold border border-neutral-200 rounded p-2.5 outline-none focus:border-black" placeholder="e.g. Bundling, Binding, And Other Things..." required>
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono text-neutral-500 mb-1">Summary (One-line landing page synopsis)</label>
+          <input type="text" id="note-summary-input" class="w-full text-xs border border-neutral-200 rounded p-2 outline-none focus:border-black" placeholder="Short description..." required>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-mono text-neutral-500 mb-1">Tags (Comma-separated, e.g. #hdc, #notes)</label>
+            <input type="text" id="note-tags-input" class="w-full text-xs font-mono border border-neutral-200 rounded p-2 outline-none focus:border-black" placeholder="#theory, #quantum">
+          </div>
+          <div>
+            <label class="block text-xs font-mono text-neutral-500 mb-1">Estimated Read Time</label>
+            <input type="text" id="note-readtime-input" class="w-full text-xs font-mono border border-neutral-200 rounded p-2 outline-none focus:border-black" placeholder="20 min">
+          </div>
+        </div>
+
+        <!-- Document Subsections (Google Docs Outline Stream) -->
+        <div class="border-t border-neutral-100 pt-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-mono font-semibold uppercase text-neutral-800">Document Sections (Google Docs Outline)</h4>
+              <p class="text-[11px] text-neutral-500">Each section creates a heading in the left sidebar outline and full text with LaTeX math.</p>
+            </div>
+            <button type="button" onclick="addSubsection('', '', '')" class="text-xs font-mono bg-neutral-100 hover:bg-neutral-200 text-neutral-800 px-3 py-1.5 rounded transition-colors">
+              + Add Section
+            </button>
+          </div>
+
+          <div id="subsections-container" class="space-y-4">
+            <!-- Dynamic Subsections -->
+          </div>
+        </div>
+
+        <!-- Publish Status -->
+        <div class="flex items-center gap-2 pt-2">
+          <input type="checkbox" id="note-published-input" class="rounded border-neutral-300 text-black focus:ring-0">
+          <label for="note-published-input" class="text-xs font-mono text-neutral-700">Published (Visible on landing page)</label>
+        </div>
+
+        <!-- Modal Footer Actions -->
+        <div class="flex items-center justify-between pt-4 border-t border-neutral-100">
+          <button type="button" id="btn-delete-note" onclick="deleteCurrentNote()" class="text-xs font-mono text-red-600 hover:text-red-700 px-3 py-2 rounded bg-red-50 hover:bg-red-100 transition-colors hidden">
+            Delete Note
+          </button>
+          <div class="flex gap-2 ml-auto">
+            <button type="button" onclick="closeNoteModal()" class="text-xs font-mono px-4 py-2 border border-neutral-200 rounded hover:bg-neutral-50 transition-colors">
+              Cancel
+            </button>
+            <button type="submit" class="bg-black hover:bg-neutral-800 text-white text-xs font-mono px-5 py-2 rounded transition-colors">
+              Save Note
+            </button>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Dashboard JavaScript Logic -->
+  <script>
+    const SECRET_KEY = '1107';
+    let currentAuthPin = sessionStorage.getItem('admin_pin');
+    let siteData = null;
+    let currentEditingNote = null;
+
+    // ==========================================
+    // 1. OTP Authentication Handling
+    // ==========================================
+    const otpInputs = document.querySelectorAll('.otp-input');
+    const otpContainer = document.getElementById('otp-container');
+    const errorMsg = document.getElementById('error-msg');
+
+    otpInputs.forEach((input, index) => {
+      input.addEventListener('input', (e) => {
+        const val = e.target.value;
+        if (val && index < otpInputs.length - 1) {
+          otpInputs[index + 1].focus();
+        }
+        checkAutoSubmit();
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !input.value && index > 0) {
+          otpInputs[index - 1].focus();
+        }
+      });
+
+      input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pasteData = e.clipboardData.getData('text').trim().slice(0, 4);
+        if (/^\d{4}$/.test(pasteData)) {
+          pasteData.split('').forEach((char, i) => {
+            if (otpInputs[i]) otpInputs[i].value = char;
+          });
+          checkAutoSubmit();
+        }
+      });
+    });
+
+    function checkAutoSubmit() {
+      const pin = Array.from(otpInputs).map(i => i.value).join('');
+      if (pin.length === 4) {
+        verifyPin(pin);
+      }
+    }
+
+    function handleOtpSubmit(e) {
+      e.preventDefault();
+      const pin = Array.from(otpInputs).map(i => i.value).join('');
+      verifyPin(pin);
+    }
+
+    async function verifyPin(pin) {
+      try {
+        const res = await fetch('/api/verify-pin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin })
+        });
+        const json = await res.json();
+
+        if (json.authenticated) {
+          sessionStorage.setItem('admin_pin', pin);
+          currentAuthPin = pin;
+          unlockDashboard();
+        } else {
+          showError('Invalid secret key');
+        }
+      } catch {
+        if (pin === SECRET_KEY) {
+          sessionStorage.setItem('admin_pin', pin);
+          currentAuthPin = pin;
+          unlockDashboard();
+        } else {
+          showError('Invalid secret key');
+        }
+      }
+    }
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.classList.remove('opacity-0');
+      otpContainer.classList.add('shake');
+      setTimeout(() => {
+        otpContainer.classList.remove('shake');
+        otpInputs.forEach(i => i.value = '');
+        otpInputs[0].focus();
+      }, 500);
+    }
+
+    function unlockDashboard() {
+      document.getElementById('lock-screen').classList.add('hidden');
+      document.getElementById('dashboard-view').classList.remove('hidden');
+      fetchPortfolioData();
+      checkDatabaseHealth();
+    }
+
+    function lockDashboard() {
+      sessionStorage.removeItem('admin_pin');
+      currentAuthPin = null;
+      window.location.reload();
+    }
+
+    // Auto-unlock if session is valid
+    if (currentAuthPin === SECRET_KEY) {
+      unlockDashboard();
+    }
+
+    // ==========================================
+    // 2. Data Fetching & API Communication
+    // ==========================================
+    async function apiFetch(url, options = {}) {
+      const headers = {
+        'Content-Type': 'application/json',
+        'x-secret-pin': currentAuthPin || SECRET_KEY,
+        ...(options.headers || {})
+      };
+      return fetch(url, { ...options, headers });
+    }
+
+    async function checkDatabaseHealth() {
+      try {
+        const res = await fetch('/health');
+        const json = await res.json();
+        const indicator = document.getElementById('db-indicator');
+        const text = document.getElementById('db-status-text');
+
+        if (json.database?.connected) {
+          indicator.className = 'w-2 h-2 rounded-full bg-emerald-500';
+          text.textContent = 'Supabase Connected';
+        } else {
+          indicator.className = 'w-2 h-2 rounded-full bg-amber-400';
+          text.textContent = 'Local Storage Mode';
+        }
+      } catch {
+        document.getElementById('db-status-text').textContent = 'API Standalone';
+      }
+    }
+
+    async function fetchPortfolioData() {
+      try {
+        const res = await fetch('/api/portfolio');
+        const json = await res.json();
+        siteData = json.data;
+        renderDashboardUI();
+      } catch (err) {
+        console.error('Failed to load portfolio:', err);
+      }
+    }
+
+    // ==========================================
+    // 3. UI Rendering & Tab Switching
+    // ==========================================
+    function switchTab(tabId) {
+      ['notes', 'profile', 'about', 'raw'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add('hidden');
+        document.getElementById(`tab-btn-${t}`).className = 'py-3.5 text-xs font-mono font-medium border-b-2 border-transparent text-neutral-500 hover:text-black transition-colors';
+      });
+
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      document.getElementById(`tab-btn-${tabId}`).className = 'py-3.5 text-xs font-mono font-medium border-b-2 border-black text-black transition-colors';
+    }
+
+    function renderDashboardUI() {
+      if (!siteData) return;
+
+      // Update Notes Tab
+      const notes = siteData.notes || [];
+      document.getElementById('notes-count').textContent = notes.length;
+      const tbody = document.getElementById('notes-table-body');
+      
+      tbody.innerHTML = notes.map((note) => `
+        <tr class="hover:bg-neutral-50 transition-colors">
+          <td class="py-3 px-4 font-mono font-medium text-[11px] text-neutral-600">
+            <span class="bg-neutral-100 px-2 py-0.5 rounded">${note.type || 'NOTE'}</span>
+          </td>
+          <td class="py-3 px-4 font-semibold text-neutral-900 max-w-xs truncate">
+            ${note.title}
+          </td>
+          <td class="py-3 px-4 font-mono text-neutral-500">
+            ${note.formattedDate || note.date}
+          </td>
+          <td class="py-3 px-4 font-mono text-neutral-500">
+            ${(note.sections || []).length} sections
+          </td>
+          <td class="py-3 px-4">
+            <span class="inline-flex items-center gap-1 text-[11px] font-mono ${note.published !== false ? 'text-emerald-700 bg-emerald-50' : 'text-neutral-500 bg-neutral-100'} px-2 py-0.5 rounded-full">
+              <span class="w-1.5 h-1.5 rounded-full ${note.published !== false ? 'bg-emerald-500' : 'bg-neutral-400'}"></span>
+              ${note.published !== false ? 'Live' : 'Draft'}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-right space-x-2">
+            <button onclick="openNoteModal('${note.id}')" class="text-xs font-mono text-neutral-700 hover:text-black underline underline-offset-2">
+              Edit
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      // Update Profile Tab
+      if (siteData.meta) {
+        document.getElementById('meta-author-name').value = siteData.meta.authorName || '';
+        document.getElementById('meta-logo-text').value = siteData.meta.logoText || '';
+        document.getElementById('meta-avatar-url').value = siteData.meta.avatarUrl || '';
+        document.getElementById('meta-copyright-year').value = siteData.meta.copyrightYear || 2026;
+      }
+      if (siteData.hero) {
+        document.getElementById('hero-heading-input').value = siteData.hero.heading || '';
+        document.getElementById('hero-highlight-input').value = siteData.hero.bioHighlight || '';
+        document.getElementById('hero-intro-input').value = siteData.hero.bioIntro || '';
+        document.getElementById('hero-more-text-input').value = siteData.hero.moreAboutText || '';
+      }
+
+      // Update About Tab
+      if (siteData.about) {
+        document.getElementById('about-section-label').value = siteData.about.sectionLabel || 'About & Focus';
+        const pList = document.getElementById('about-paragraphs-list');
+        pList.innerHTML = '';
+        (siteData.about.paragraphs || []).forEach(p => addAboutParagraph(p));
+      }
+
+      // Update Raw JSON Tab
+      document.getElementById('raw-json-display').textContent = JSON.stringify(siteData, null, 2);
+    }
+
+    // ==========================================
+    // 4. Note Modal & Subsections Management
+    // ==========================================
+    function openNoteModal(noteId) {
+      const modal = document.getElementById('note-modal');
+      const deleteBtn = document.getElementById('btn-delete-note');
+      const container = document.getElementById('subsections-container');
+      container.innerHTML = '';
+
+      if (noteId === 'new') {
+        currentEditingNote = null;
+        document.getElementById('modal-title').textContent = 'Create New Research Note';
+        document.getElementById('note-edit-id').value = '';
+        document.getElementById('note-id-input').value = 'note-' + (siteData.notes.length + 1);
+        document.getElementById('note-type-input').value = 'NOTE';
+        document.getElementById('note-date-input').value = new Date().toISOString().split('T')[0];
+        document.getElementById('note-title-input').value = '';
+        document.getElementById('note-summary-input').value = '';
+        document.getElementById('note-tags-input').value = '#notes';
+        document.getElementById('note-readtime-input').value = '15 min';
+        document.getElementById('note-published-input').checked = true;
+        deleteBtn.classList.add('hidden');
+
+        // Default sections
+        addSubsection('abstract', 'Abstract', '<div class="p-4 bg-neutral-50 rounded italic">Abstract content...</div>');
+        addSubsection('sec-1', '1. Introduction', '<p>Section content with LaTeX math: $E = mc^2$</p>');
+      } else {
+        const note = siteData.notes.find(n => n.id === noteId);
+        if (!note) return;
+        currentEditingNote = note;
+        document.getElementById('modal-title').textContent = 'Edit Research Note: ' + note.title;
+        document.getElementById('note-edit-id').value = note.id;
+        document.getElementById('note-id-input').value = note.id;
+        document.getElementById('note-type-input').value = note.type || 'NOTE';
+        document.getElementById('note-date-input').value = note.date || '';
+        document.getElementById('note-title-input').value = note.title || '';
+        document.getElementById('note-summary-input').value = note.summary || '';
+        document.getElementById('note-tags-input').value = (note.tags || []).join(', ');
+        document.getElementById('note-readtime-input').value = note.readTime || '15 min';
+        document.getElementById('note-published-input').checked = note.published !== false;
+        deleteBtn.classList.remove('hidden');
+
+        (note.sections || []).forEach(sec => {
+          addSubsection(sec.id, sec.title, sec.content);
+        });
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeNoteModal() {
+      const modal = document.getElementById('note-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function addSubsection(id = '', title = '', content = '') {
+      const container = document.getElementById('subsections-container');
+      const secIdx = container.children.length + 1;
+      const sectionDiv = document.createElement('div');
+      sectionDiv.className = 'subsection-item bg-neutral-50 border border-neutral-200 rounded-lg p-4 space-y-3';
+      sectionDiv.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-mono font-medium text-neutral-600">Section #${secIdx}</span>
+          <button type="button" onclick="this.closest('.subsection-item').remove()" class="text-xs text-red-500 hover:text-red-700 font-mono">Remove</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-mono text-neutral-400 mb-1">Anchor ID (e.g. sec-${secIdx})</label>
+            <input type="text" class="sec-id-input w-full text-xs font-mono border border-neutral-200 bg-white rounded p-2 outline-none focus:border-black" value="${id || 'sec-' + secIdx}" required>
+          </div>
+          <div>
+            <label class="block text-[11px] font-mono text-neutral-400 mb-1">Sidebar Outline Title</label>
+            <input type="text" class="sec-title-input w-full text-xs font-mono border border-neutral-200 bg-white rounded p-2 outline-none focus:border-black" value="${title}" placeholder="e.g. ${secIdx}. Background" required>
+          </div>
+        </div>
+        <div>
+          <label class="block text-[11px] font-mono text-neutral-400 mb-1">Content (HTML & LaTeX Math: $inline$ or $$display$$)</label>
+          <textarea rows="3" class="sec-content-input w-full text-xs font-mono border border-neutral-200 bg-white rounded p-2 outline-none focus:border-black" required>${content}</textarea>
+        </div>
+      `;
+      container.appendChild(sectionDiv);
+    }
+
+    async function saveNote(e) {
+      e.preventDefault();
+      const editId = document.getElementById('note-edit-id').value;
+      const noteId = document.getElementById('note-id-input').value;
+      
+      const secItems = document.querySelectorAll('.subsection-item');
+      const sections = Array.from(secItems).map(item => ({
+        id: item.querySelector('.sec-id-input').value.trim(),
+        title: item.querySelector('.sec-title-input').value.trim(),
+        content: item.querySelector('.sec-content-input').value.trim()
+      }));
+
+      const tags = document.getElementById('note-tags-input').value
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean)
+        .map(t => t.startsWith('#') ? t : `#${t}`);
+
+      const notePayload = {
+        id: noteId,
+        slug: noteId.replace(/[^a-zA-Z0-9-_]/g, '-').toLowerCase(),
+        type: document.getElementById('note-type-input').value,
+        date: document.getElementById('note-date-input').value,
+        formattedDate: new Date(document.getElementById('note-date-input').value).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        title: document.getElementById('note-title-input').value,
+        summary: document.getElementById('note-summary-input').value,
+        readTime: document.getElementById('note-readtime-input').value,
+        tags,
+        published: document.getElementById('note-published-input').checked,
+        sections
+      };
+
+      const url = editId ? `/api/notes/${editId}` : '/api/notes';
+      const method = editId ? 'PUT' : 'POST';
+
+      const res = await apiFetch(url, {
+        method,
+        body: JSON.stringify(notePayload)
+      });
+
+      if (res.ok) {
+        closeNoteModal();
+        fetchPortfolioData();
+      } else {
+        alert('Failed to save note.');
+      }
+    }
+
+    async function deleteCurrentNote() {
+      if (!currentEditingNote) return;
+      if (confirm(`Are you sure you want to delete "${currentEditingNote.title}"?`)) {
+        const res = await apiFetch(`/api/notes/${currentEditingNote.id}`, { method: 'DELETE' });
+        if (res.ok) {
+          closeNoteModal();
+          fetchPortfolioData();
+        } else {
+          alert('Failed to delete note.');
+        }
+      }
+    }
+
+    // ==========================================
+    // 5. Profile & About Saving
+    // ==========================================
+    async function saveProfileSettings(e) {
+      e.preventDefault();
+      const meta = {
+        authorName: document.getElementById('meta-author-name').value,
+        logoText: document.getElementById('meta-logo-text').value,
+        avatarUrl: document.getElementById('meta-avatar-url').value,
+        copyrightYear: parseInt(document.getElementById('meta-copyright-year').value) || 2026
+      };
+      const hero = {
+        heading: document.getElementById('hero-heading-input').value,
+        bioHighlight: document.getElementById('hero-highlight-input').value,
+        bioIntro: document.getElementById('hero-intro-input').value,
+        moreAboutText: document.getElementById('hero-more-text-input').value
+      };
+
+      await Promise.all([
+        apiFetch('/api/meta', { method: 'PUT', body: JSON.stringify(meta) }),
+        apiFetch('/api/hero', { method: 'PUT', body: JSON.stringify(hero) })
+      ]);
+
+      alert('Profile and Hero updated successfully!');
+      fetchPortfolioData();
+    }
+
+    function addAboutParagraph(text = '') {
+      const list = document.getElementById('about-paragraphs-list');
+      const div = document.createElement('div');
+      div.className = 'flex gap-2 items-start';
+      div.innerHTML = `
+        <textarea rows="2" class="about-p-input w-full text-xs border border-neutral-200 rounded p-2 outline-none focus:border-black" placeholder="Enter paragraph..." required>${text}</textarea>
+        <button type="button" onclick="this.parentElement.remove()" class="text-xs text-red-500 hover:text-red-700 font-mono mt-1">✕</button>
+      `;
+      list.appendChild(div);
+    }
+
+    async function saveAboutSettings(e) {
+      e.preventDefault();
+      const sectionLabel = document.getElementById('about-section-label').value;
+      const pInputs = document.querySelectorAll('.about-p-input');
+      const paragraphs = Array.from(pInputs).map(i => i.value.trim()).filter(Boolean);
+
+      const res = await apiFetch('/api/about', {
+        method: 'PUT',
+        body: JSON.stringify({ sectionLabel, paragraphs })
+      });
+
+      if (res.ok) {
+        alert('About paragraphs updated successfully!');
+        fetchPortfolioData();
+      }
+    }
+
+    function downloadJsonBackup() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(siteData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "portfolio_backup.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+  </script>
+</body>
+</html>
