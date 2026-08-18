@@ -44,7 +44,7 @@ function saveLocalData() {
   }
 }
 
-// Secret PIN Auth Verification middleware/helper
+// Secret PIN Auth Verification
 const SECRET_PIN = process.env.ADMIN_PIN || '1107';
 
 function verifyAdmin(c) {
@@ -65,6 +65,7 @@ app.get('/dashboard', serveStatic({ path: './dashboard.html' }));
 // 1. Health Check
 app.get('/health', async (c) => {
   let supabaseConnected = false;
+  let supabaseWriteable = false;
   if (supabase) {
     try {
       const { error } = await supabase.from('notes').select('id').limit(1);
@@ -109,6 +110,9 @@ app.post('/api/verify-pin', async (c) => {
 
 // 3. Full Portfolio Bundle: GET /api/portfolio
 app.get('/api/portfolio', async (c) => {
+  // Always load latest local data first
+  loadLocalData();
+
   if (supabase) {
     try {
       const [metaRes, heroRes, aboutRes, notesRes] = await Promise.all([
@@ -179,26 +183,32 @@ app.get('/api/portfolio', async (c) => {
 
 // 4. Notes List: GET /api/notes
 app.get('/api/notes', async (c) => {
-  if (supabase) {
-    const { data } = await supabase
-      .from('notes')
-      .select('id, slug, type, date, formatted_date, read_time, tags, title, summary, published, sort_order')
-      .order('sort_order', { ascending: true });
+  loadLocalData();
 
-    if (data && data.length > 0) {
-      const formatted = data.map(n => ({
-        id: n.id,
-        slug: n.slug,
-        type: n.type,
-        date: n.date,
-        formattedDate: n.formatted_date,
-        readTime: n.read_time,
-        tags: n.tags || [],
-        title: n.title,
-        summary: n.summary,
-        published: n.published !== false
-      }));
-      return c.json({ status: 'success', source: 'supabase', count: formatted.length, data: formatted });
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('notes')
+        .select('id, slug, type, date, formatted_date, read_time, tags, title, summary, published, sort_order')
+        .order('sort_order', { ascending: true });
+
+      if (!error && data && data.length > 0) {
+        const formatted = data.map(n => ({
+          id: n.id,
+          slug: n.slug,
+          type: n.type,
+          date: n.date,
+          formattedDate: n.formatted_date,
+          readTime: n.read_time,
+          tags: n.tags || [],
+          title: n.title,
+          summary: n.summary,
+          published: n.published !== false
+        }));
+        return c.json({ status: 'success', source: 'supabase', count: formatted.length, data: formatted });
+      }
+    } catch (e) {
+      console.warn('Supabase notes error:', e);
     }
   }
 
@@ -208,37 +218,42 @@ app.get('/api/notes', async (c) => {
 
 // 5. Single Note: GET /api/notes/:id
 app.get('/api/notes/:id', async (c) => {
+  loadLocalData();
   const idOrSlug = c.req.param('id');
 
   if (supabase) {
-    const { data: note } = await supabase
-      .from('notes')
-      .select(`
-        id, slug, type, date, formatted_date, read_time, tags, title, summary, subtitle, published,
-        sections:note_sections(id:section_anchor_id, title, content, sort_order)
-      `)
-      .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
-      .maybeSingle();
+    try {
+      const { data: note, error } = await supabase
+        .from('notes')
+        .select(`
+          id, slug, type, date, formatted_date, read_time, tags, title, summary, subtitle, published,
+          sections:note_sections(id:section_anchor_id, title, content, sort_order)
+        `)
+        .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
+        .maybeSingle();
 
-    if (note) {
-      return c.json({
-        status: 'success',
-        source: 'supabase',
-        data: {
-          id: note.id,
-          slug: note.slug,
-          type: note.type,
-          date: note.date,
-          formattedDate: note.formatted_date,
-          readTime: note.read_time,
-          tags: note.tags || [],
-          title: note.title,
-          summary: note.summary,
-          subtitle: note.subtitle,
-          published: note.published !== false,
-          sections: (note.sections || []).sort((a, b) => a.sort_order - b.sort_order)
-        }
-      });
+      if (!error && note) {
+        return c.json({
+          status: 'success',
+          source: 'supabase',
+          data: {
+            id: note.id,
+            slug: note.slug,
+            type: note.type,
+            date: note.date,
+            formattedDate: note.formatted_date,
+            readTime: note.read_time,
+            tags: note.tags || [],
+            title: note.title,
+            summary: note.summary,
+            subtitle: note.subtitle,
+            published: note.published !== false,
+            sections: (note.sections || []).sort((a, b) => a.sort_order - b.sort_order)
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('Supabase single note fetch error:', e);
     }
   }
 
@@ -263,10 +278,23 @@ app.post('/api/notes', async (c) => {
     return c.json({ status: 'error', message: 'Note id and title are required' }, 400);
   }
 
-  // Update Supabase if available
+  // Update local content.json first
+  loadLocalData();
+  if (!localData.notes) localData.notes = [];
+  const existingIdx = localData.notes.findIndex(n => n.id === note.id);
+  if (existingIdx >= 0) {
+    localData.notes[existingIdx] = note;
+  } else {
+    localData.notes.push(note);
+  }
+  saveLocalData();
+
+  let supabaseStatus = 'skipped';
+  let supabaseError = null;
+
   if (supabase) {
     try {
-      await supabase.from('notes').upsert({
+      const { error: upsertErr } = await supabase.from('notes').upsert({
         id: note.id,
         slug: note.slug || note.id,
         type: note.type || 'NOTE',
@@ -281,35 +309,37 @@ app.post('/api/notes', async (c) => {
         sort_order: note.sort_order || 0
       });
 
-      if (Array.isArray(note.sections)) {
-        await supabase.from('note_sections').delete().eq('note_id', note.id);
-        const sectionsToInsert = note.sections.map((sec, idx) => ({
-          note_id: note.id,
-          section_anchor_id: sec.id,
-          title: sec.title,
-          content: sec.content,
-          sort_order: idx + 1
-        }));
-        if (sectionsToInsert.length > 0) {
-          await supabase.from('note_sections').insert(sectionsToInsert);
+      if (upsertErr) {
+        supabaseStatus = 'error';
+        supabaseError = upsertErr.message;
+      } else {
+        supabaseStatus = 'synced';
+        if (Array.isArray(note.sections)) {
+          await supabase.from('note_sections').delete().eq('note_id', note.id);
+          const sectionsToInsert = note.sections.map((sec, idx) => ({
+            note_id: note.id,
+            section_anchor_id: sec.id,
+            title: sec.title,
+            content: sec.content,
+            sort_order: idx + 1
+          }));
+          if (sectionsToInsert.length > 0) {
+            await supabase.from('note_sections').insert(sectionsToInsert);
+          }
         }
       }
     } catch (e) {
-      console.warn('Supabase insert note error:', e);
+      supabaseStatus = 'error';
+      supabaseError = e.message;
     }
   }
 
-  // Update local content.json
-  if (!localData.notes) localData.notes = [];
-  const existingIdx = localData.notes.findIndex(n => n.id === note.id);
-  if (existingIdx >= 0) {
-    localData.notes[existingIdx] = note;
-  } else {
-    localData.notes.push(note);
-  }
-  saveLocalData();
-
-  return c.json({ status: 'success', message: 'Note created successfully', data: note });
+  return c.json({
+    status: 'success',
+    message: 'Note created successfully',
+    supabase: { status: supabaseStatus, error: supabaseError },
+    data: note
+  });
 });
 
 // Update Note: PUT /api/notes/:id
@@ -319,9 +349,27 @@ app.put('/api/notes/:id', async (c) => {
   const id = c.req.param('id');
   const updatedData = await c.req.json();
 
+  // 1. Update local cache immediately
+  loadLocalData();
+  if (localData?.notes) {
+    const idx = localData.notes.findIndex(n => n.id === id);
+    if (idx >= 0) {
+      localData.notes[idx] = { ...localData.notes[idx], ...updatedData, id };
+      saveLocalData();
+    } else {
+      localData.notes.push({ ...updatedData, id });
+      saveLocalData();
+    }
+  }
+
+  let supabaseStatus = 'skipped';
+  let supabaseError = null;
+
+  // 2. Sync to Supabase
   if (supabase) {
     try {
-      await supabase.from('notes').update({
+      const { error: noteUpdateErr } = await supabase.from('notes').upsert({
+        id,
         slug: updatedData.slug || id,
         type: updatedData.type || 'NOTE',
         date: updatedData.date,
@@ -332,35 +380,39 @@ app.put('/api/notes/:id', async (c) => {
         summary: updatedData.summary || '',
         subtitle: updatedData.subtitle || '',
         published: updatedData.published !== false
-      }).eq('id', id);
+      });
 
-      if (Array.isArray(updatedData.sections)) {
-        await supabase.from('note_sections').delete().eq('note_id', id);
-        const sectionsToInsert = updatedData.sections.map((sec, idx) => ({
-          note_id: id,
-          section_anchor_id: sec.id,
-          title: sec.title,
-          content: sec.content,
-          sort_order: idx + 1
-        }));
-        if (sectionsToInsert.length > 0) {
-          await supabase.from('note_sections').insert(sectionsToInsert);
+      if (noteUpdateErr) {
+        supabaseStatus = 'error';
+        supabaseError = noteUpdateErr.message;
+        console.warn('Supabase update note RLS / error:', noteUpdateErr);
+      } else {
+        supabaseStatus = 'synced';
+        if (Array.isArray(updatedData.sections)) {
+          await supabase.from('note_sections').delete().eq('note_id', id);
+          const sectionsToInsert = updatedData.sections.map((sec, idx) => ({
+            note_id: id,
+            section_anchor_id: sec.id,
+            title: sec.title,
+            content: sec.content,
+            sort_order: idx + 1
+          }));
+          if (sectionsToInsert.length > 0) {
+            await supabase.from('note_sections').insert(sectionsToInsert);
+          }
         }
       }
     } catch (e) {
-      console.warn('Supabase update note error:', e);
+      supabaseStatus = 'error';
+      supabaseError = e.message;
     }
   }
 
-  if (localData?.notes) {
-    const idx = localData.notes.findIndex(n => n.id === id);
-    if (idx >= 0) {
-      localData.notes[idx] = { ...localData.notes[idx], ...updatedData, id };
-      saveLocalData();
-    }
-  }
-
-  return c.json({ status: 'success', message: 'Note updated successfully' });
+  return c.json({
+    status: 'success',
+    message: 'Note updated successfully',
+    supabase: { status: supabaseStatus, error: supabaseError }
+  });
 });
 
 // Delete Note: DELETE /api/notes/:id
@@ -369,17 +421,18 @@ app.delete('/api/notes/:id', async (c) => {
 
   const id = c.req.param('id');
 
+  loadLocalData();
+  if (localData?.notes) {
+    localData.notes = localData.notes.filter(n => n.id !== id);
+    saveLocalData();
+  }
+
   if (supabase) {
     try {
       await supabase.from('notes').delete().eq('id', id);
     } catch (e) {
       console.warn('Supabase delete note error:', e);
     }
-  }
-
-  if (localData?.notes) {
-    localData.notes = localData.notes.filter(n => n.id !== id);
-    saveLocalData();
   }
 
   return c.json({ status: 'success', message: `Note '${id}' deleted successfully` });
@@ -390,6 +443,10 @@ app.put('/api/meta', async (c) => {
   if (!verifyAdmin(c)) return c.json({ status: 'error', message: 'Unauthorized' }, 401);
 
   const meta = await c.req.json();
+  loadLocalData();
+  localData.meta = { ...localData.meta, ...meta };
+  saveLocalData();
+
   if (supabase) {
     try {
       await supabase.from('portfolio_meta').upsert({
@@ -407,9 +464,6 @@ app.put('/api/meta', async (c) => {
     }
   }
 
-  localData.meta = { ...localData.meta, ...meta };
-  saveLocalData();
-
   return c.json({ status: 'success', message: 'Metadata updated successfully', data: localData.meta });
 });
 
@@ -418,6 +472,10 @@ app.put('/api/hero', async (c) => {
   if (!verifyAdmin(c)) return c.json({ status: 'error', message: 'Unauthorized' }, 401);
 
   const hero = await c.req.json();
+  loadLocalData();
+  localData.hero = { ...localData.hero, ...hero };
+  saveLocalData();
+
   if (supabase) {
     try {
       await supabase.from('portfolio_hero').upsert({
@@ -433,9 +491,6 @@ app.put('/api/hero', async (c) => {
     }
   }
 
-  localData.hero = { ...localData.hero, ...hero };
-  saveLocalData();
-
   return c.json({ status: 'success', message: 'Hero updated successfully', data: localData.hero });
 });
 
@@ -444,6 +499,10 @@ app.put('/api/about', async (c) => {
   if (!verifyAdmin(c)) return c.json({ status: 'error', message: 'Unauthorized' }, 401);
 
   const about = await c.req.json();
+  loadLocalData();
+  localData.about = { ...localData.about, ...about };
+  saveLocalData();
+
   if (supabase) {
     try {
       await supabase.from('portfolio_about').upsert({
@@ -455,9 +514,6 @@ app.put('/api/about', async (c) => {
       console.warn('Supabase update about error:', e);
     }
   }
-
-  localData.about = { ...localData.about, ...about };
-  saveLocalData();
 
   return c.json({ status: 'success', message: 'About updated successfully', data: localData.about });
 });
