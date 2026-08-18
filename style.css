@@ -1,0 +1,83 @@
+/* Minimal Academic Notebook Portfolio & Google Docs Outline Reader Styling */
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition {
+  animation: pageFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #ffffff;
+  color: #111111;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Google Docs Outline Active State Styling */
+.outline-link {
+  transition: all 0.15s ease-in-out;
+  position: relative;
+  border-left: 2px solid transparent;
+}
+
+.outline-link.active {
+  color: #000000 !important;
+  font-weight: 600 !important;
+  border-left-color: #000000 !important;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 0 4px 4px 0;
+}
+
+.outline-link:hover:not(.active) {
+  color: #111111;
+  background-color: rgba(0, 0, 0, 0.015);
+  border-radius: 0 4px 4px 0;
+}
+
+/* Custom minimal scrollbar for sidebar outline */
+.outline-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.outline-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.outline-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 9999px;
+}
+
+.outline-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Math blocks styling */
+.katex-display {
+  margin: 1.25em 0 !important;
+  padding: 0.85em 1em;
+  background: #fafafa;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}

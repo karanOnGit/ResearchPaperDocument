@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AcademicNotebookPortfolioSchema",
+  "description": "JSON Schema mapping 1:1 to the minimal academic notebook portfolio website and full-page Google Docs outline reader.",
+  "type": "object",
+  "required": [
+    "meta",
+    "hero",
+    "about",
+    "notes"
+  ],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "description": "Global website metadata and header configuration",
+      "required": ["authorName", "logoText", "avatarUrl", "pageTitle", "metaDescription", "copyrightYear"],
+      "properties": {
+        "authorName": {
+          "type": "string",
+          "example": "Karan"
+        },
+        "logoText": {
+          "type": "string",
+          "description": "Quiet name logo displayed on top-left of header",
+          "example": "Karan"
+        },
+        "avatarUrl": {
+          "type": "string",
+          "description": "Relative or absolute URL of the pencil sketch avatar image placed at top-right",
+          "example": "avatar.jpg"
+        },
+        "pageTitle": {
+          "type": "string",
+          "example": "Karan — Notes & Exploratory Research"
+        },
+        "metaDescription": {
+          "type": "string",
+          "example": "Personal notebook and exploratory research on learning algorithms, AI for science, and quantum computing."
+        },
+        "copyrightYear": {
+          "type": "integer",
+          "example": 2026
+        },
+        "socialLinks": {
+          "type": "array",
+          "description": "Optional social and academic profiles",
+          "items": {
+            "type": "object",
+            "required": ["platform", "url"],
+            "properties": {
+              "platform": { "type": "string", "example": "GitHub" },
+              "url": { "type": "string", "format": "uri", "example": "https://github.com/karan" }
+            }
+          }
+        }
+      }
+    },
+    "hero": {
+      "type": "object",
+      "description": "Hero section content placement",
+      "required": ["heading", "bioIntro", "bioHighlight", "moreAboutText", "moreAboutAnchor"],
+      "properties": {
+        "heading": {
+          "type": "string",
+          "description": "Large bold heading displayed in hero",
+          "example": "Notes and exploratory research."
+        },
+        "bioHighlight": {
+          "type": "string",
+          "description": "Highlighted prefix in bio",
+          "example": "Karan"
+        },
+        "bioIntro": {
+          "type": "string",
+          "description": "Body text of the bio line",
+          "example": "I think about learning algorithms, AI for science, and quantum computing."
+        },
+        "moreAboutText": {
+          "type": "string",
+          "description": "Underline anchor text linking to about section",
+          "example": "More about me."
+        },
+        "moreAboutAnchor": {
+          "type": "string",
+          "example": "#about"
+        }
+      }
+    },
+    "about": {
+      "type": "object",
+      "description": "About & research focus section content placement",
+      "required": ["sectionLabel", "paragraphs"],
+      "properties": {
+        "sectionLabel": {
+          "type": "string",
+          "example": "About & Focus"
+        },
+        "paragraphs": {
+          "type": "array",
+          "description": "Thoughtful reflective paragraphs describing research domains",
+          "items": {
+            "type": "string"
+          },
+          "example": [
+            "I explore representations in neural systems, high-dimensional computing, and how algebraic mathematical structures translate into computational substrates.",
+            "Currently spending time writing notes, building small exploratory models, and reading literature across machine learning theory, cognitive architectures, and physics-informed computational frameworks."
+          ]
+        }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "description": "List of research essays and notes (used on landing page and full-page reader view)",
+      "items": {
+        "$ref": "#/$defs/ResearchNote"
+      }
+    }
+  },
+  "$defs": {
+    "ResearchNote": {
+      "type": "object",
+      "required": [
+        "id",
+        "slug",
+        "type",
+        "date",
+        "formattedDate",
+        "readTime",
+        "tags",
+        "title",
+        "summary",
+        "sections"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier / anchor hash for routing",
+          "example": "note-1"
+        },
+        "slug": {
+          "type": "string",
+          "description": "URL-friendly slug for SEO and routing",
+          "example": "bundling-binding-brain-representation"
+        },
+        "type": {
+          "type": "string",
+          "description": "Category badge displayed in uppercase monospace",
+          "enum": ["ESSAY", "NOTE", "LOG", "PAPER"],
+          "example": "ESSAY"
+        },
+        "date": {
+          "type": "string",
+          "description": "ISO date string",
+          "format": "date",
+          "example": "2026-04-22"
+        },
+        "formattedDate": {
+          "type": "string",
+          "description": "Human readable date string for display",
+          "example": "Apr 22, 2026"
+        },
+        "readTime": {
+          "type": "string",
+          "description": "Estimated reading duration",
+          "example": "30 min"
+        },
+        "tags": {
+          "type": "array",
+          "description": "List of topic tags prefixed with #",
+          "items": {
+            "type": "string"
+          },
+          "example": ["#hdc", "#interpretability", "#notes"]
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the research piece displayed in landing list and reader header",
+          "example": "Bundling, Binding, And Other Things Your Brain Probably Does, Or Not"
+        },
+        "summary": {
+          "type": "string",
+          "description": "One-line brief synopsis displayed on landing page under title",
+          "example": "An exploratory walk through the algebra of compositional representation."
+        },
+        "subtitle": {
+          "type": "string",
+          "description": "Optional italic thesis statement in reader view",
+          "example": "An exploratory walk through the algebra of compositional representation and vector symbolic architectures."
+        },
+        "sections": {
+          "type": "array",
+          "description": "Internal document subsections populated into Google Docs left outline and full article stream",
+          "items": {
+            "$ref": "#/$defs/DocumentSection"
+          }
+        }
+      }
+    },
+    "DocumentSection": {
+      "type": "object",
+      "required": ["id", "title", "content"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "HTML anchor ID used by Google Docs scroll spy",
+          "example": "sec-1"
+        },
+        "title": {
+          "type": "string",
+          "description": "Heading label rendered in left sidebar outline and section header",
+          "example": "1. The Superposition Dilemma & Symbolic Graphs"
+        },
+        "content": {
+          "type": "string",
+          "description": "HTML or Markdown body content with LaTeX mathematical expressions ($inline$ or $$display$$)",
+          "example": "<p>Classical symbolic AI represents complex compositions using discrete syntactic trees...</p>"
+        }
+      }
+    }
+  }
+}

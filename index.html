@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="doc-title">Karan — Notes & Exploratory Research</title>
+  <meta id="doc-meta-desc" name="description" content="Karan — Notes and exploratory research on learning algorithms, AI for science, and quantum computing.">
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;450;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- KaTeX for academic math formula rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="window.renderMath && window.renderMath();"></script>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'Menlo', 'monospace'],
+          },
+          colors: {
+            notebook: {
+              bg: '#ffffff',
+              ink: '#111111',
+              muted: '#555555',
+              subtle: '#888888',
+              line: 'rgba(0, 0, 0, 0.08)',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body id="top" class="bg-white text-notebook-ink antialiased selection:bg-neutral-100 selection:text-black min-h-screen relative overflow-x-hidden font-sans">
+
+  <!-- Drizzling Rain Canvas Animation (Landing page background only) -->
+  <canvas id="drizzle-canvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+
+  <!-- Subtle Geometric Notebook Background Canvas -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none" aria-hidden="true">
+    <svg class="absolute inset-0 w-full h-full text-black" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="notebook-scatter" width="260" height="260" patternUnits="userSpaceOnUse">
+          <path d="M 24 16 L 24 32 M 16 24 L 32 24" stroke="currentColor" stroke-width="1.2" stroke-linecap="square" opacity="0.04" />
+          <path d="M 190 140 L 190 156 M 182 148 L 198 148" stroke="currentColor" stroke-width="1.2" stroke-linecap="square" opacity="0.035" />
+          <path d="M 80 70 L 92 70 L 92 82" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.035" />
+          <path d="M 140 210 L 128 210 L 128 198" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.035" />
+          <path d="M 230 40 L 242 40 L 242 52" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.03" />
+
+          <circle cx="50" cy="180" r="1.2" fill="currentColor" opacity="0.045" />
+          <circle cx="62" cy="180" r="1.2" fill="currentColor" opacity="0.045" />
+          <circle cx="50" cy="192" r="1.2" fill="currentColor" opacity="0.045" />
+          <circle cx="62" cy="192" r="1.2" fill="currentColor" opacity="0.045" />
+
+          <circle cx="160" cy="50" r="1.2" fill="currentColor" opacity="0.04" />
+          <circle cx="172" cy="50" r="1.2" fill="currentColor" opacity="0.04" />
+
+          <rect x="110" y="110" width="4" height="4" fill="currentColor" opacity="0.035" />
+          <rect x="116" y="116" width="4" height="4" fill="currentColor" opacity="0.035" />
+          <rect x="104" y="116" width="4" height="4" fill="currentColor" opacity="0.035" />
+          <rect x="110" y="122" width="4" height="4" fill="currentColor" opacity="0.035" />
+
+          <line x1="0" y1="130" x2="16" y2="130" stroke="currentColor" stroke-width="1" stroke-dasharray="2 3" opacity="0.035" />
+          <line x1="210" y1="90" x2="226" y2="90" stroke="currentColor" stroke-width="1" stroke-dasharray="2 3" opacity="0.03" />
+          
+          <rect x="220" y="180" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1" opacity="0.03" />
+        </pattern>
+      </defs>
+
+      <rect width="100%" height="100%" fill="url(#notebook-scatter)" />
+    </svg>
+
+    <!-- Specific margin glyphs -->
+    <div class="notebook-glyphs absolute left-6 top-16 opacity-[0.045] font-mono text-[10px] leading-tight">
+      + &nbsp; · &nbsp; · &nbsp; ┌ ┐<br>
+      · &nbsp; + &nbsp; · &nbsp; └ ┘<br>
+      · &nbsp; · &nbsp; + &nbsp; · ·
+    </div>
+    <div class="notebook-glyphs absolute left-8 top-[600px] opacity-[0.04] font-mono text-[10px] leading-tight">
+      [ 0 1 0 ]<br>
+      [ 1 1 0 ]<br>
+      + - + -
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 1. LANDING PAGE VIEW (Dynamic from Hono / Supabase API)                    -->
+  <!-- ========================================================================= -->
+  <div id="landing-view" class="relative z-10 max-w-5xl mx-auto px-6 sm:px-12 md:px-16 min-h-screen flex flex-col justify-between pt-10 sm:pt-14 pb-16 page-transition">
+    
+    <!-- Top Header: Quiet name logo on the left, Pencil Sketch Avatar on top right -->
+    <header class="w-full flex items-center justify-between pb-12 sm:pb-20">
+      <div id="author-logo" class="text-[17px] font-semibold tracking-[-0.01em] text-black select-none">
+        Karan
+      </div>
+      
+      <!-- Right-side Top Sketch Avatar -->
+      <div class="flex items-center">
+        <div class="relative group">
+          <img 
+            id="author-avatar"
+            src="avatar.jpg" 
+            alt="Karan Sketch Portrait" 
+            class="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover object-top border border-neutral-200/90 shadow-sm filter contrast-[1.05] grayscale hover:grayscale-0 transition-all duration-300 ring-4 ring-neutral-50"
+          >
+          <div class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-neutral-900 rounded-full border-2 border-white" title="Researching"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow">
+
+      <!-- Hero Section (Dynamic) -->
+      <section class="mb-14 sm:mb-20">
+        <h1 id="hero-heading" class="text-4xl sm:text-5xl md:text-[3.75rem] leading-[1.1] font-bold text-black tracking-[-0.03em]">
+          Notes and exploratory research.
+        </h1>
+        
+        <div class="mt-6 sm:mt-8 text-base sm:text-[1.18rem] leading-relaxed text-[#555555] font-normal max-w-2xl">
+          <p id="hero-bio">
+            <span id="hero-bio-highlight" class="text-black font-semibold">Karan</span> — <span id="hero-bio-intro">I think about learning algorithms, AI for science, and quantum computing.</span>
+            <a id="hero-more-link" href="#about" class="text-black underline decoration-neutral-300 underline-offset-4 hover:decoration-black transition-colors ml-0.5 inline-block">More about me.</a>
+          </p>
+        </div>
+      </section>
+
+      <!-- About Section (Dynamic) -->
+      <section id="about" class="mb-20 sm:mb-28 pt-2 scroll-mt-12">
+        <div id="about-paragraphs" class="max-w-2xl text-[15px] sm:text-base leading-relaxed text-[#555555] space-y-4 font-normal">
+          <p>
+            I explore representations in neural systems, high-dimensional computing, and how algebraic mathematical structures translate into computational substrates.
+          </p>
+          <p>
+            Currently spending time writing notes, building small exploratory models, and reading literature across machine learning theory, cognitive architectures, and physics-informed computational frameworks.
+          </p>
+        </div>
+      </section>
+
+      <!-- Writing / Notes Section (Dynamic 2-Column List rendered from API) -->
+      <section id="notes-list-container" class="border-t border-[#eaeaea]">
+        <!-- Injected dynamically via script.js from Supabase/Hono API -->
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-24 sm:mt-32 pt-8 text-xs font-mono text-[#888888] flex items-center justify-between">
+      <div>
+        © <span id="current-year">2026</span> <span id="footer-author-name">Karan</span>
+      </div>
+      <div>
+        <a href="#top" class="hover:text-black transition-colors">top ↑</a>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 2. FULL-PAGE DOCUMENT READER VIEW (Google Docs Left Outline Sidebar)        -->
+  <!-- ========================================================================= -->
+  <div id="reader-view" class="hidden relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 pt-8 sm:pt-12 pb-24 page-transition">
+    
+    <!-- Reader Top Bar Navigation -->
+    <header class="w-full flex items-center justify-between pb-8 border-b border-neutral-100 mb-8 sm:mb-12">
+      <button onclick="navigateToHome()" class="group flex items-center gap-2 text-xs font-mono text-neutral-500 hover:text-black transition-colors" aria-label="Back to Notes">
+        <span class="text-base leading-none group-hover:-translate-x-1 transition-transform">←</span>
+        <span>Back to Notes</span>
+      </button>
+      <div class="text-xs font-mono text-neutral-400">
+        <span id="reader-author-name">Karan</span> / <span id="reader-doc-tag" class="text-neutral-600">Research Paper</span>
+      </div>
+    </header>
+
+    <!-- Reader Layout: Left Sticky Outline (Google Docs style) + Right Full Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
+      
+      <!-- Left Column: Google Docs Outline (Sticky on Desktop) -->
+      <aside class="lg:col-span-4">
+        <div class="lg:sticky lg:top-10 max-h-[85vh] overflow-y-auto pr-4 outline-sidebar">
+          
+          <div class="text-[11px] font-mono font-medium uppercase tracking-widest text-[#888888] mb-4 pl-3 flex items-center gap-2">
+            <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h7" />
+            </svg>
+            Document Outline
+          </div>
+
+          <!-- Dynamic Outline Links injected via script.js -->
+          <nav class="space-y-0.5 text-sm border-l border-neutral-200" id="essay-outline">
+          </nav>
+
+          <div class="mt-8 pt-4 border-t border-neutral-100 pl-3">
+            <button onclick="navigateToHome()" class="text-xs font-mono text-neutral-400 hover:text-neutral-800 transition-colors flex items-center gap-1.5">
+              <span>←</span>
+              <span>All research notes</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right Column: Full Long-Form Document Body -->
+      <main class="lg:col-span-8 max-w-3xl">
+        <div id="essay-body">
+        </div>
+
+        <div class="mt-20 pt-8 border-t border-neutral-150 flex items-center justify-between text-xs font-mono text-[#888888]">
+          <button onclick="navigateToHome()" class="hover:text-black transition-colors flex items-center gap-1">
+            ← Return to index
+          </button>
+          <div>
+            © <span id="reader-copyright-year">2026</span> <span id="reader-footer-author">Karan</span>
+          </div>
+        </div>
+      </main>
+
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

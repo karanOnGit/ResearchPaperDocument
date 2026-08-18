@@ -1,0 +1,211 @@
+{
+  "meta": {
+    "authorName": "Karan",
+    "logoText": "Karan",
+    "avatarUrl": "avatar.jpg",
+    "pageTitle": "Karan — Notes & Exploratory Research",
+    "metaDescription": "Personal notebook and exploratory research on learning algorithms, AI for science, and quantum computing.",
+    "copyrightYear": 2026,
+    "socialLinks": [
+      { "platform": "GitHub", "url": "https://github.com" },
+      { "platform": "Twitter", "url": "https://twitter.com" },
+      { "platform": "Email", "url": "mailto:karan@research.org" }
+    ]
+  },
+  "hero": {
+    "heading": "Notes and exploratory research.",
+    "bioHighlight": "Karan",
+    "bioIntro": "I think about learning algorithms, AI for science, and quantum computing.",
+    "moreAboutText": "More about me.",
+    "moreAboutAnchor": "#about"
+  },
+  "about": {
+    "sectionLabel": "About & Focus",
+    "paragraphs": [
+      "I explore representations in neural systems, high-dimensional computing, and how algebraic mathematical structures translate into computational substrates.",
+      "Currently spending time writing notes, building small exploratory models, and reading literature across machine learning theory, cognitive architectures, and physics-informed computational frameworks."
+    ]
+  },
+  "notes": [
+    {
+      "id": "note-1",
+      "slug": "bundling-binding-representation",
+      "type": "ESSAY",
+      "date": "2026-04-22",
+      "formattedDate": "Apr 22, 2026",
+      "readTime": "30 min",
+      "tags": ["#hdc", "#interpretability", "#notes"],
+      "title": "Bundling, Binding, And Other Things Your Brain Probably Does, Or Not",
+      "summary": "An exploratory walk through the algebra of compositional representation.",
+      "subtitle": "An exploratory walk through the algebra of compositional representation and vector symbolic architectures.",
+      "sections": [
+        {
+          "id": "abstract",
+          "title": "Abstract",
+          "content": "<div class=\"p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic\"><strong>Abstract —</strong> How do distributed continuous representations encode structured symbolic hierarchies without suffering exponential explosion in dimensionality? We examine Vector Symbolic Architectures (VSA / Hyperdimensional Computing) and mechanistic transformer interpretability to understand how biological neural circuits and continuous embeddings solve variable binding and compositionality.</div>"
+        },
+        {
+          "id": "sec-1",
+          "title": "1. The Superposition Dilemma & Symbolic Graphs",
+          "content": "<p>Classical symbolic AI represents complex compositions using discrete syntactic parse trees, pointer graphs, and recursive tuples. In biological neural tissue and continuous machine learning architectures, however, everything exists as a dense or sparse vector in high-dimensional hyperspace $\\mathbb{R}^D$ where $D \\ge 10^4$.</p><p>When multiple concepts are simultaneously activated in the same neural substrate, their raw activation patterns linearly superimpose. Without structured algebra, this leads to the classic <em>binding problem</em>: if the network activates $\\text{Circle}$, $\\text{Square}$, $\\text{Red}$, and $\\text{Blue}$, how does downstream circuitry know whether it is perceiving a $\\text{Red Circle}$ and $\\text{Blue Square}$, or a $\\text{Blue Circle}$ and $\\text{Red Square}$?</p>"
+        },
+        {
+          "id": "sec-2",
+          "title": "2. Vector Symbolic Algebraic Operators",
+          "content": "<p>Vector Symbolic Architectures define an algebraic ring over high-dimensional hyperspaces with three fundamental operations:</p><ul class=\"list-disc pl-5 space-y-2 text-[#444444] text-[14.5px]\"><li><strong>Bundling ($+$):</strong> Linear superposition representing approximate set union: $\\mathbf{S} = \\mathbf{A} + \\mathbf{B}$. The resulting vector retains high cosine similarity with both constituents: $$\\langle \\mathbf{S}, \\mathbf{A} \\rangle \\gg 0, \\quad \\langle \\mathbf{S}, \\mathbf{B} \\rangle \\gg 0$$</li><li><strong>Binding ($\\otimes$):</strong> Quasi-orthogonal multiplication for variable-value binding: $\\mathbf{P} = \\mathbf{role} \\otimes \\mathbf{filler}$. Crucially, the bound product is near-orthogonal to its operands: $$\\langle \\mathbf{x} \\otimes \\mathbf{y}, \\mathbf{x} \\rangle \\approx 0, \\quad \\langle \\mathbf{x} \\otimes \\mathbf{y}, \\mathbf{y} \\rangle \\approx 0$$</li><li><strong>Permutation ($\\Pi$):</strong> Coordinate permutation encoding sequence order, syntactic dependency trees, and spatial coordinate grids without altering vector norm.</li></ul>"
+        },
+        {
+          "id": "sec-3",
+          "title": "3. Mathematical Formulation of Hyperdimensional Spaces",
+          "content": "<p>Consider a full scene description composed of multiple objects, each characterized by bound attribute pairs:</p><div class=\"my-4\">$$\\mathbf{Scene} = \\left(\\mathbf{Shape} \\otimes \\mathbf{Circle} + \\mathbf{Color} \\otimes \\mathbf{Blue}\\right) + \\Pi\\left(\\mathbf{Shape} \\otimes \\mathbf{Square} + \\mathbf{Color} \\otimes \\mathbf{Red}\\right)$$</div><p>Because high-dimensional hyperspheres exhibit concentration of measure, any two randomly sampled independent vectors $\\mathbf{u}, \\mathbf{v} \\sim \\mathcal{S}^{D-1}$ satisfy: $$\\mathbb{P}\\left( |\\langle \\mathbf{u}, \\mathbf{v} \\rangle| > \\frac{\\epsilon}{\\sqrt{D}} \\right) \\le 2 e^{-\\frac{\\epsilon^2}{2}}$$</p><p>This geometric orthogonality ensures that cross-talk interference terms act as bounded Gaussian noise.</p>"
+        },
+        {
+          "id": "sec-4",
+          "title": "4. Unbinding, Clean-Up Memories, and Noise Tolerance",
+          "content": "<p>To query a composite vector for a specific role filler, we perform algebraic unbinding by multiplying with the exact pseudoinverse of the role key:</p><div class=\"my-4\">$$\\mathbf{Query} = \\mathbf{Shape}^{-1} \\otimes \\mathbf{Scene} = \\mathbf{Circle} + \\mathbf{noise}_{\\text{cross-talk}}$$</div><p>Passing $\\mathbf{Query}$ through an associative clean-up dictionary memory $\\mathcal{M} = \\{ \\mathbf{v}_1, \\mathbf{v}_2, \\dots, \\mathbf{v}_K \\}$ cleanly extracts $\\mathbf{Circle}$ with near-zero error probability when dimensionality $D \\ge 10^4$.</p>"
+        },
+        {
+          "id": "sec-5",
+          "title": "5. Neural Substrates and Mechanistic Interpretability",
+          "content": "<p>Does modern deep learning — specifically transformer self-attention — discover a continuous approximation of hyperdimensional binding?</p><p>Recent mechanistic interpretability findings in attention induction heads demonstrate that early layers project continuous key-query pairs into orthogonal subspaces, effectively performing algebraic role-filler separation across induction circuits.</p>"
+        },
+        {
+          "id": "sec-6",
+          "title": "6. Open Questions & Future Directions",
+          "content": "<p>Key challenges remain in scaling differentiable VSA:</p><ol class=\"list-decimal pl-5 space-y-1.5 text-[#444444] text-[14px]\"><li>Can hardware neuromorphic crossbars compute circular convolution binding in continuous analog time?</li><li>How can gradient descent directly optimize unbinding memories without discrete winner-take-all bottlenecks?</li><li>Bridging topological quantum computing with high-dimensional algebraic states.</li></ol>"
+        }
+      ]
+    },
+    {
+      "id": "note-2",
+      "slug": "phase-transitions-linear-attention",
+      "type": "NOTE",
+      "date": "2026-02-14",
+      "formattedDate": "Feb 14, 2026",
+      "readTime": "14 min",
+      "tags": ["#theory", "#transformers", "#mechanistic"],
+      "title": "Phase Transitions in Small Linear Attention Networks",
+      "summary": "Tracing sudden emergence of in-context induction capabilities across training trajectories in toy attention models.",
+      "subtitle": "Tracing sudden emergence of in-context induction capabilities across training trajectories in toy attention models.",
+      "sections": [
+        {
+          "id": "abstract",
+          "title": "Abstract",
+          "content": "<div class=\"p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic\"><strong>Abstract —</strong> We study the training dynamics of a 2-layer linear attention model on synthetic Markovian n-gram tasks. We show that in-context induction capabilities emerge as a sharp discontinuous phase transition driven by spectral alignment of query-key weight products.</div>"
+        },
+        {
+          "id": "sec-1",
+          "title": "1. The Mystery of In-Context Induction",
+          "content": "<p>During pre-training of transformer architectures, empirical evaluation curves often display extended loss plateaus followed by an abrupt, steep descent. During this sudden jump, networks rapidly acquire the ability to copy tokens and perform in-context sequence induction.</p>"
+        },
+        {
+          "id": "sec-2",
+          "title": "2. Minimal Model Architecture & Mathematical Setup",
+          "content": "<p>We isolate a minimal 2-layer linear self-attention network without non-linear MLPs. Given input sequence $\\mathbf{X} \\in \\mathbb{R}^{L \\times d}$, the attention operator computes: $$\\mathbf{A}^{(1)} = \\mathbf{X} W_Q^{(1)} \\left( W_K^{(1)} \\right)^T \\mathbf{X}^T, \\quad \\mathbf{Z} = \\mathbf{A}^{(1)} \\mathbf{X} W_V^{(1)}$$</p>"
+        },
+        {
+          "id": "sec-3",
+          "title": "3. Spectral Dynamics of Query-Key Matrices",
+          "content": "<p>By performing singular value decomposition on $M = W_Q^{(2)} (W_K^{(2)})^T$, we observe that throughout the initial training plateau, the singular values remain near zero while the principal singular vectors rotate silently: $$\\frac{d}{dt} \\mathbf{u}_1(M) \\propto \\eta \\cdot \\left( \\Sigma_{\\text{data}} \\otimes \\mathcal{H} \\right) \\mathbf{v}_1(M)$$</p>"
+        },
+        {
+          "id": "sec-4",
+          "title": "4. Critical Phase Bifurcation & Gradient Dynamics",
+          "content": "<p>Once vector alignment exceeds a critical geometric threshold $\\tau^*$, the gradient signal undergoes positive feedback, causing singular value $\\sigma_1(M)$ to explode from $\\approx 0.01$ to $4.8$ within fewer than 150 gradient steps.</p>"
+        }
+      ]
+    },
+    {
+      "id": "note-3",
+      "slug": "geometric-priors-quantum-tomography",
+      "type": "NOTE",
+      "date": "2025-11-08",
+      "formattedDate": "Nov 08, 2025",
+      "readTime": "22 min",
+      "tags": ["#quantum", "#geometry", "#optimization"],
+      "title": "Geometric Priors for Quantum State Tomography",
+      "summary": "Constraining density matrix reconstruction using Riemannian manifold geometry and symmetry group invariants.",
+      "subtitle": "Constraining density matrix reconstruction using Riemannian manifold geometry and symmetry group invariants.",
+      "sections": [
+        {
+          "id": "abstract",
+          "title": "Abstract",
+          "content": "<div class=\"p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic\"><strong>Abstract —</strong> Reconstructing density matrices $\\rho \\in \\mathbb{C}^{2^N \\times 2^N}$ under experimental Pauli noise poses steep ill-posed optimization challenges. We formulate state estimation on the Riemannian quotient manifold $\\mathcal{S}_+(r, d) / \\mathcal{U}(r)$, ensuring physical validity natively.</div>"
+        },
+        {
+          "id": "sec-1",
+          "title": "1. Reconstructing Density Matrices from Pauli Measurements",
+          "content": "<p>Quantum state tomography requires determining the complex density operator $\\rho$ satisfying unit trace $\\text{Tr}(\\rho) = 1$ and positive semi-definiteness $\\rho \\succeq 0$. Standard gradient descent with Lagrangian penalties frequently violates physical eigenvalue constraints.</p>"
+        },
+        {
+          "id": "sec-2",
+          "title": "2. Riemannian Quotient Manifold Formulation",
+          "content": "<p>By factorizing $\\rho = Y Y^\\dagger$ where $Y \\in \\mathbb{C}^{d \\times r}$, the state space is modeled natively on the quotient manifold $\\mathcal{M} = \\mathbb{C}_*^{d \\times r} / \\mathcal{U}(r)$. The Riemannian gradient takes the exact form: $$\\text{grad}_{\\mathcal{M}} f(Y) = 2 \\left( \\nabla f(Y Y^\\dagger) \\right) Y - Y (Y^\\dagger Y)^{-1} Y^\\dagger (\\nabla f) Y$$</p>"
+        },
+        {
+          "id": "sec-3",
+          "title": "3. Geodesic Optimization & Numerical Convergence",
+          "content": "<p>Geodesic updates follow the matrix exponential map along the horizontal subspace of the tangent space, guaranteeing physical validity at every step while achieving $3.4\\times$ sample efficiency gains over standard maximum likelihood estimation.</p>"
+        }
+      ]
+    },
+    {
+      "id": "note-4",
+      "slug": "gradient-starvation-spectral-bias",
+      "type": "ESSAY",
+      "date": "2025-08-19",
+      "formattedDate": "Aug 19, 2025",
+      "readTime": "18 min",
+      "tags": ["#deep-learning", "#spectral-bias"],
+      "title": "On Gradient Starvation and Spectral Bias in Deep ResNets",
+      "summary": "Why deep residual networks default to low-frequency features, and what happens when you force high-frequency signal propagation.",
+      "subtitle": "Why deep residual networks default to low-frequency features, and what happens when you force high-frequency signal propagation.",
+      "sections": [
+        {
+          "id": "abstract",
+          "title": "Abstract",
+          "content": "<div class=\"p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic\"><strong>Abstract —</strong> We analyze Neural Tangent Kernels in residual architectures, proving that identity skip connections act as frequency dampeners, inducing severe gradient starvation on high-wavenumber Fourier signals.</div>"
+        },
+        {
+          "id": "sec-1",
+          "title": "1. Spectral Bias in Neural Tangent Kernels",
+          "content": "<p>Under gradient descent in overparameterized regimes, neural networks learn target functions by decomposing them into eigenfunctions of their Neural Tangent Kernel (NTK). Low-frequency Fourier modes correspond to large eigenvalues and are learned exponentially faster than high-frequency components.</p>"
+        },
+        {
+          "id": "sec-2",
+          "title": "2. Identity Shortcuts as Frequency Filters",
+          "content": "<p>Because residual skip connections propagate DC offsets unobstructed, deep residual networks dampen high-frequency gradients. Introducing adaptive spectral pre-filtering in bottleneck layers restores gradient parity and mitigates cross-entropy saturation.</p>"
+        }
+      ]
+    },
+    {
+      "id": "note-5",
+      "slug": "variational-inference-dynamical-systems",
+      "type": "NOTE",
+      "date": "2025-05-03",
+      "formattedDate": "May 03, 2025",
+      "readTime": "12 min",
+      "tags": ["#variational-methods", "#sde", "#dynamics"],
+      "title": "Notes on Variational Inference for Continuous Dynamical Systems",
+      "summary": "A continuous-time formulation of evidence lower bounds (ELBO) parameterized with stochastic differential equations.",
+      "subtitle": "A continuous-time formulation of evidence lower bounds (ELBO) parameterized with stochastic differential equations.",
+      "sections": [
+        {
+          "id": "abstract",
+          "title": "Abstract",
+          "content": "<div class=\"p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic\"><strong>Abstract —</strong> We formulate continuous-time evidence lower bounds for latent paths governed by stochastic differential equations using Girsanov's theorem and adjoint state backpropagation.</div>"
+        },
+        {
+          "id": "sec-1",
+          "title": "1. Continuous-Time Latent Trajectories & SDEs",
+          "content": "<p>Consider a latent continuous process $\\mathbf{z}_t$ governed by: $$d\\mathbf{z}_t = f_\\theta(\\mathbf{z}_t, t)dt + g(t)d\\mathbf{w}_t$$</p><p>Applying Girsanov's change of measure yields the exact continuous-time path KL divergence: $$\\mathcal{D}_{\\text{KL}}(q \\,\\|\\, p) = \\frac{1}{2} \\mathbb{E}_q \\left[ \\int_0^T \\left\\| \\frac{f_\\theta(\\mathbf{z}_t, t) - u_\\phi(\\mathbf{z}_t, t)}{g(t)} \\right\\|^2 dt \\right]$$</p>"
+        },
+        {
+          "id": "sec-2",
+          "title": "2. Adjoint State Backpropagation & O(1) Memory",
+          "content": "<p>By integrating the continuous adjoint system in reverse time, parameter gradients are computed with $O(1)$ memory complexity regardless of the temporal discretization grid.</p>"
+        }
+      ]
+    }
+  ]
+}
