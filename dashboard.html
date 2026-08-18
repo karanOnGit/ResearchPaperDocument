@@ -15,6 +15,10 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
+  <!-- Marked (Markdown to HTML) and Turndown (HTML to Markdown) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/turndown@7.1.2/dist/turndown.js"></script>
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -47,8 +51,30 @@
     .katex-display {
       margin: 0.8em 0 !important;
       padding: 0.5em 0.8em;
-      background: #fafafa;
+      background: #f8f9fa;
       border-radius: 4px;
+      overflow-x: auto;
+    }
+    .preview-body p {
+      margin-bottom: 0.75rem;
+      line-height: 1.6;
+    }
+    .preview-body ul {
+      list-style-type: disc;
+      margin-left: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+    .preview-body ol {
+      list-style-type: decimal;
+      margin-left: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+    .preview-body blockquote {
+      border-left: 3px solid #000;
+      padding-left: 1rem;
+      margin: 0.75rem 0;
+      font-style: italic;
+      color: #555;
     }
   </style>
 </head>
@@ -308,14 +334,17 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- 3. RESEARCH NOTE EDIT / CREATE MODAL                                       -->
+  <!-- 3. RESEARCH NOTE EDIT / CREATE MODAL WITH FORMATTED TEXT TO HTML CONVERTER -->
   <!-- ========================================================================= -->
   <div id="note-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-xl max-w-4xl w-full my-8 border border-neutral-200 shadow-2xl flex flex-col max-h-[90vh]">
+    <div class="bg-white rounded-xl max-w-4xl w-full my-8 border border-neutral-200 shadow-2xl flex flex-col max-h-[92vh]">
       
       <!-- Modal Header -->
       <div class="px-6 py-4 border-b border-neutral-100 flex items-center justify-between sticky top-0 bg-white z-10">
-        <h3 id="modal-title" class="text-base font-bold text-black">Edit Research Note</h3>
+        <div>
+          <h3 id="modal-title" class="text-base font-bold text-black">Edit Research Note</h3>
+          <p class="text-[11px] text-neutral-400 font-mono">Formatted Text & Markdown auto-converts to clean HTML on save</p>
+        </div>
         <button onclick="closeNoteModal()" class="text-neutral-400 hover:text-black text-xl leading-none">&times;</button>
       </div>
 
@@ -350,7 +379,7 @@
         </div>
 
         <div>
-          <label class="block text-xs font-mono text-neutral-500 mb-1">Summary (One-line landing page synopsis)</label>
+          <label class="block text-xs font-mono text-neutral-500 mb-1">Summary (One-line synopsis)</label>
           <input type="text" id="note-summary-input" class="w-full text-xs border border-neutral-200 rounded p-2 outline-none focus:border-black" placeholder="Short description..." required>
         </div>
 
@@ -365,20 +394,21 @@
           </div>
         </div>
 
-        <!-- Document Subsections (Google Docs Outline Stream) -->
+        <!-- Document Subsections Editor (Formatted Text / Markdown to HTML) -->
         <div class="border-t border-neutral-100 pt-5 space-y-4">
           <div class="flex items-center justify-between">
             <div>
-              <h4 class="text-xs font-mono font-semibold uppercase text-neutral-800">Document Sections (Google Docs Outline)</h4>
-              <p class="text-[11px] text-neutral-500">Each section creates a heading in the left sidebar outline and full text with LaTeX math.</p>
+              <h4 class="text-xs font-mono font-semibold uppercase text-neutral-800">Document Sections (Formatted Text to HTML)</h4>
+              <p class="text-[11px] text-neutral-500">Write formatted text or Markdown with LaTeX ($x$ or $$E=mc^2$$). It automatically converts to clean HTML.</p>
             </div>
-            <button type="button" onclick="addSubsection('', '', '')" class="text-xs font-mono bg-neutral-100 hover:bg-neutral-200 text-neutral-800 px-3 py-1.5 rounded transition-colors">
-              + Add Section
+            <button type="button" onclick="addSubsection('', '', '')" class="text-xs font-mono bg-black hover:bg-neutral-800 text-white px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+              <span>+</span>
+              <span>Add Section</span>
             </button>
           </div>
 
-          <div id="subsections-container" class="space-y-4">
-            <!-- Dynamic Subsections -->
+          <div id="subsections-container" class="space-y-5">
+            <!-- Dynamic Subsections with Rich Formatted Editor -->
           </div>
         </div>
 
@@ -398,7 +428,7 @@
               Cancel
             </button>
             <button type="submit" class="bg-black hover:bg-neutral-800 text-white text-xs font-mono px-5 py-2 rounded transition-colors">
-              Save Note
+              Save Note (Auto-convert to HTML)
             </button>
           </div>
         </div>
@@ -413,6 +443,7 @@
     let currentAuthPin = sessionStorage.getItem('admin_pin');
     let siteData = null;
     let currentEditingNote = null;
+    const turndownService = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
 
     // ==========================================
     // 1. OTP Authentication Handling
@@ -635,7 +666,124 @@
     }
 
     // ==========================================
-    // 4. Note Modal & Subsections Management
+    // 4. Formatted Text & Markdown to HTML Converter
+    // ==========================================
+    function formatTextToHtml(rawText) {
+      if (!rawText) return '';
+      const trimmed = rawText.trim();
+      
+      // If it already contains extensive HTML elements (e.g. custom div callouts), return clean HTML
+      if (trimmed.startsWith('<div') || trimmed.startsWith('<table') || trimmed.startsWith('<blockquote') || trimmed.startsWith('<section')) {
+        return trimmed;
+      }
+
+      // Convert Markdown / formatted text to clean HTML
+      if (window.marked) {
+        return marked.parse(trimmed);
+      }
+      return `<p>${trimmed.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
+    }
+
+    function htmlToFormattedText(html) {
+      if (!html) return '';
+      const trimmed = html.trim();
+      
+      // Keep complex layout divs untouched
+      if (trimmed.startsWith('<div') || trimmed.startsWith('<table')) {
+        return trimmed;
+      }
+
+      try {
+        if (window.turndownService) {
+          return turndownService.turndown(trimmed);
+        }
+      } catch (e) {
+        console.warn('Turndown error:', e);
+      }
+      return trimmed;
+    }
+
+    // Toolbar formatting helper
+    function applyFormat(textarea, formatType) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selected = textarea.value.substring(start, end);
+      let replacement = '';
+
+      switch (formatType) {
+        case 'bold':
+          replacement = `**${selected || 'bold text'}**`;
+          break;
+        case 'italic':
+          replacement = `*${selected || 'italic text'}*`;
+          break;
+        case 'code':
+          replacement = selected.includes('\n') ? `\`\`\`\n${selected || 'code block'}\n\`\`\`` : `\`${selected || 'code'}\``;
+          break;
+        case 'math_inline':
+          replacement = `$${selected || 'f(x) = y'}$`;
+          break;
+        case 'math_block':
+          replacement = `\n$$\n${selected || '\\sum_{i=1}^n x_i'}\n$$\n`;
+          break;
+        case 'callout':
+          replacement = `<div class="p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic"><strong>Abstract —</strong> ${selected || 'Summary statement.'}</div>`;
+          break;
+        case 'list':
+          replacement = `\n- ${selected || 'List item 1'}\n- List item 2\n`;
+          break;
+      }
+
+      textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+      textarea.focus();
+      textarea.setSelectionRange(start + replacement.length, start + replacement.length);
+      
+      // Trigger preview update
+      const wrapper = textarea.closest('.subsection-item');
+      if (wrapper) updateSectionPreview(wrapper);
+    }
+
+    function updateSectionPreview(wrapper) {
+      const textarea = wrapper.querySelector('.sec-content-input');
+      const previewEl = wrapper.querySelector('.sec-preview-content');
+      if (!textarea || !previewEl) return;
+
+      const html = formatTextToHtml(textarea.value);
+      previewEl.innerHTML = html || '<span class="text-neutral-400 italic">No content to preview...</span>';
+
+      // Render KaTeX Math in preview
+      if (window.renderMathInElement) {
+        window.renderMathInElement(previewEl, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false }
+          ],
+          throwOnError: false
+        });
+      }
+    }
+
+    function togglePreviewTab(btn, mode) {
+      const wrapper = btn.closest('.subsection-item');
+      const editorBox = wrapper.querySelector('.editor-box');
+      const previewBox = wrapper.querySelector('.preview-box');
+      const tabs = wrapper.querySelectorAll('.mode-tab');
+
+      tabs.forEach(t => t.className = 'mode-tab text-[11px] font-mono px-2 py-1 rounded text-neutral-500 hover:text-black');
+      btn.className = 'mode-tab text-[11px] font-mono px-2 py-1 rounded bg-white shadow-sm font-semibold text-black';
+
+      if (mode === 'preview') {
+        editorBox.classList.add('hidden');
+        previewBox.classList.remove('hidden');
+        updateSectionPreview(wrapper);
+      } else {
+        editorBox.classList.remove('hidden');
+        previewBox.classList.add('hidden');
+      }
+    }
+
+    // ==========================================
+    // 5. Note Modal & Subsections Management
     // ==========================================
     function openNoteModal(noteId) {
       const modal = document.getElementById('note-modal');
@@ -647,7 +795,7 @@
         currentEditingNote = null;
         document.getElementById('modal-title').textContent = 'Create New Research Note';
         document.getElementById('note-edit-id').value = '';
-        document.getElementById('note-id-input').value = 'note-' + (siteData.notes.length + 1);
+        document.getElementById('note-id-input').value = 'note-' + ((siteData?.notes?.length || 0) + 1);
         document.getElementById('note-type-input').value = 'NOTE';
         document.getElementById('note-date-input').value = new Date().toISOString().split('T')[0];
         document.getElementById('note-title-input').value = '';
@@ -658,8 +806,8 @@
         deleteBtn.classList.add('hidden');
 
         // Default sections
-        addSubsection('abstract', 'Abstract', '<div class="p-4 bg-neutral-50 rounded italic">Abstract content...</div>');
-        addSubsection('sec-1', '1. Introduction', '<p>Section content with LaTeX math: $E = mc^2$</p>');
+        addSubsection('abstract', 'Abstract', '<div class="p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic"><strong>Abstract —</strong> Summary statement.</div>');
+        addSubsection('sec-1', '1. Introduction', '### Overview\n\nExplain your formulation with inline math $E=mc^2$ or equations:\n\n$$\n\\mathcal{L}_{\\text{ELBO}}(\\theta, \\phi) = \\mathbb{E}_{q_\\phi(z|x)}[\\log p_\\theta(x|z)] - D_{\\text{KL}}(q_\\phi(z|x) \\,\\|\\, p(z))\n$$');
       } else {
         const note = siteData.notes.find(n => n.id === noteId);
         if (!note) return;
@@ -691,29 +839,57 @@
       modal.classList.remove('flex');
     }
 
-    function addSubsection(id = '', title = '', content = '') {
+    function addSubsection(id = '', title = '', rawContent = '') {
       const container = document.getElementById('subsections-container');
       const secIdx = container.children.length + 1;
       const sectionDiv = document.createElement('div');
       sectionDiv.className = 'subsection-item bg-neutral-50 border border-neutral-200 rounded-lg p-4 space-y-3';
+      
+      // Auto formatted text initial value
+      const initialText = htmlToFormattedText(rawContent);
+
       sectionDiv.innerHTML = `
         <div class="flex items-center justify-between">
-          <span class="text-xs font-mono font-medium text-neutral-600">Section #${secIdx}</span>
-          <button type="button" onclick="this.closest('.subsection-item').remove()" class="text-xs text-red-500 hover:text-red-700 font-mono">Remove</button>
+          <span class="text-xs font-mono font-semibold text-neutral-700">Section #${secIdx}</span>
+          <div class="flex items-center gap-2">
+            <div class="flex bg-neutral-200/70 p-0.5 rounded text-xs">
+              <button type="button" onclick="togglePreviewTab(this, 'edit')" class="mode-tab text-[11px] font-mono px-2 py-1 rounded bg-white shadow-sm font-semibold text-black">Editor</button>
+              <button type="button" onclick="togglePreviewTab(this, 'preview')" class="mode-tab text-[11px] font-mono px-2 py-1 rounded text-neutral-500 hover:text-black">Preview HTML / KaTeX</button>
+            </div>
+            <button type="button" onclick="this.closest('.subsection-item').remove()" class="text-xs text-red-500 hover:text-red-700 font-mono pl-2">Remove</button>
+          </div>
         </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-[11px] font-mono text-neutral-400 mb-1">Anchor ID (e.g. sec-${secIdx})</label>
+            <label class="block text-[11px] font-mono text-neutral-400 mb-1">Anchor ID (Sidebar link ID)</label>
             <input type="text" class="sec-id-input w-full text-xs font-mono border border-neutral-200 bg-white rounded p-2 outline-none focus:border-black" value="${id || 'sec-' + secIdx}" required>
           </div>
           <div>
             <label class="block text-[11px] font-mono text-neutral-400 mb-1">Sidebar Outline Title</label>
-            <input type="text" class="sec-title-input w-full text-xs font-mono border border-neutral-200 bg-white rounded p-2 outline-none focus:border-black" value="${title}" placeholder="e.g. ${secIdx}. Background" required>
+            <input type="text" class="sec-title-input w-full text-xs font-semibold border border-neutral-200 bg-white rounded p-2 outline-none focus:border-black" value="${title}" placeholder="e.g. ${secIdx}. Introduction" required>
           </div>
         </div>
-        <div>
-          <label class="block text-[11px] font-mono text-neutral-400 mb-1">Content (HTML & LaTeX Math: $inline$ or $$display$$)</label>
-          <textarea rows="3" class="sec-content-input w-full text-xs font-mono border border-neutral-200 bg-white rounded p-2 outline-none focus:border-black" required>${content}</textarea>
+
+        <!-- Formatted Editor Box -->
+        <div class="editor-box space-y-1.5">
+          <!-- Toolbar -->
+          <div class="flex flex-wrap items-center gap-1 bg-white border border-neutral-200 rounded-t p-1.5 text-xs font-mono">
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'bold')" class="px-2 py-1 hover:bg-neutral-100 rounded font-bold" title="Bold (**text**)">B</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'italic')" class="px-2 py-1 hover:bg-neutral-100 rounded italic" title="Italic (*text*)">I</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'code')" class="px-2 py-1 hover:bg-neutral-100 rounded text-neutral-600" title="Inline / Block Code">\`Code\`</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'math_inline')" class="px-2 py-1 hover:bg-neutral-100 rounded text-neutral-600" title="Inline LaTeX ($x$)">$f(x)$</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'math_block')" class="px-2 py-1 hover:bg-neutral-100 rounded text-neutral-600" title="Block LaTeX ($$...$$)">$$\sum$$</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'callout')" class="px-2 py-1 hover:bg-neutral-100 rounded text-neutral-600" title="Abstract Box">Abstract Box</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'list')" class="px-2 py-1 hover:bg-neutral-100 rounded text-neutral-600" title="List">• List</button>
+          </div>
+          <textarea rows="5" class="sec-content-input w-full text-xs font-mono border border-t-0 border-neutral-200 bg-white rounded-b p-2.5 outline-none focus:border-black" placeholder="Write formatted text, markdown, or formulas..." required>${initialText}</textarea>
+        </div>
+
+        <!-- Live HTML & KaTeX Preview Box -->
+        <div class="preview-box hidden bg-white border border-neutral-200 rounded p-4 text-xs">
+          <div class="text-[10px] font-mono text-neutral-400 uppercase tracking-widest mb-2 border-b pb-1">Live HTML & KaTeX Output</div>
+          <div class="sec-preview-content preview-body text-neutral-800 text-[13px] leading-relaxed"></div>
         </div>
       `;
       container.appendChild(sectionDiv);
@@ -725,11 +901,17 @@
       const noteId = document.getElementById('note-id-input').value;
       
       const secItems = document.querySelectorAll('.subsection-item');
-      const sections = Array.from(secItems).map(item => ({
-        id: item.querySelector('.sec-id-input').value.trim(),
-        title: item.querySelector('.sec-title-input').value.trim(),
-        content: item.querySelector('.sec-content-input').value.trim()
-      }));
+      
+      // Auto convert each section's formatted text/markdown to clean HTML format
+      const sections = Array.from(secItems).map(item => {
+        const rawContent = item.querySelector('.sec-content-input').value.trim();
+        const htmlContent = formatTextToHtml(rawContent);
+        return {
+          id: item.querySelector('.sec-id-input').value.trim(),
+          title: item.querySelector('.sec-title-input').value.trim(),
+          content: htmlContent
+        };
+      });
 
       const tags = document.getElementById('note-tags-input').value
         .split(',')
@@ -781,7 +963,7 @@
     }
 
     // ==========================================
-    // 5. Profile & About Saving
+    // 6. Profile & About Saving
     // ==========================================
     async function saveProfileSettings(e) {
       e.preventDefault();
