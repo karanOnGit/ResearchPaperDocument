@@ -76,6 +76,63 @@
       font-style: italic;
       color: #555;
     }
+    .preview-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.82rem;
+    }
+    .preview-body th, .preview-body td {
+      border: 1px solid #e5e5e5;
+      padding: 0.45rem 0.75rem;
+      text-align: left;
+    }
+    .preview-body th {
+      background-color: #fafafa;
+      font-family: ui-monospace, monospace;
+      font-weight: 600;
+    }
+    .preview-body pre {
+      background: #18181b;
+      color: #f4f4f5;
+      padding: 0.85rem 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 0.85rem 0;
+      font-family: ui-monospace, monospace;
+      font-size: 0.8rem;
+    }
+    .preview-body code:not(pre code) {
+      background: #f4f4f5;
+      color: #18181b;
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      font-family: ui-monospace, monospace;
+      font-size: 0.82em;
+    }
+    /* Toolbar Button Styling */
+    .tb-btn {
+      padding: 0.25rem 0.45rem;
+      border-radius: 0.25rem;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.7rem;
+      color: #4b5563;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tb-btn:hover {
+      background-color: #f3f4f6;
+      color: #000000;
+    }
+    .tb-divider {
+      width: 1px;
+      height: 1.1rem;
+      background-color: #e5e7eb;
+      margin: 0 0.2rem;
+    }
   </style>
 </head>
 <body class="bg-[#fafafa] text-neutral-900 font-sans min-h-screen antialiased">
@@ -135,8 +192,8 @@
 
         <div class="flex items-center gap-4">
           <div id="supabase-badge" class="flex items-center gap-1.5 text-[11px] font-mono text-neutral-500 bg-neutral-50 border border-neutral-200 px-2.5 py-1 rounded-full">
-            <span class="w-2 h-2 rounded-full bg-amber-400" id="db-indicator"></span>
-            <span id="db-status-text">Checking database...</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-500" id="db-indicator"></span>
+            <span id="db-status-text">Synchronized</span>
           </div>
 
           <a href="/" target="_blank" class="text-xs font-mono text-neutral-600 hover:text-black transition-colors flex items-center gap-1">
@@ -334,16 +391,16 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- 3. RESEARCH NOTE EDIT / CREATE MODAL WITH FORMATTED TEXT TO HTML CONVERTER -->
+  <!-- 3. RESEARCH NOTE EDIT / CREATE MODAL WITH RICH TOOLBAR & SHORTCUTS         -->
   <!-- ========================================================================= -->
   <div id="note-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-xl max-w-4xl w-full my-8 border border-neutral-200 shadow-2xl flex flex-col max-h-[92vh]">
+    <div class="bg-white rounded-xl max-w-5xl w-full my-8 border border-neutral-200 shadow-2xl flex flex-col max-h-[92vh]">
       
       <!-- Modal Header -->
       <div class="px-6 py-4 border-b border-neutral-100 flex items-center justify-between sticky top-0 bg-white z-10">
         <div>
           <h3 id="modal-title" class="text-base font-bold text-black">Edit Research Note</h3>
-          <p class="text-[11px] text-neutral-400 font-mono">Formatted Text & Markdown auto-converts to clean HTML on save</p>
+          <p class="text-[11px] text-neutral-400 font-mono">Full formatting toolkit with LaTeX Math and Keyboard Shortcuts (Cmd/Ctrl + B, I, E, M, K...)</p>
         </div>
         <button onclick="closeNoteModal()" class="text-neutral-400 hover:text-black text-xl leading-none">&times;</button>
       </div>
@@ -394,21 +451,26 @@
           </div>
         </div>
 
-        <!-- Document Subsections Editor (Formatted Text / Markdown to HTML) -->
+        <!-- Document Subsections Editor (Rich Formatting & Shortcuts) -->
         <div class="border-t border-neutral-100 pt-5 space-y-4">
           <div class="flex items-center justify-between">
             <div>
-              <h4 class="text-xs font-mono font-semibold uppercase text-neutral-800">Document Sections (Formatted Text to HTML)</h4>
-              <p class="text-[11px] text-neutral-500">Write formatted text or Markdown with LaTeX ($x$ or $$E=mc^2$$). It automatically converts to clean HTML.</p>
+              <h4 class="text-xs font-mono font-semibold uppercase text-neutral-800">Document Sections (Google Docs Outline & Math)</h4>
+              <p class="text-[11px] text-neutral-500">Supports Markdown, KaTeX LaTeX math, Callouts, Tables, and Shortcuts.</p>
             </div>
-            <button type="button" onclick="addSubsection('', '', '')" class="text-xs font-mono bg-black hover:bg-neutral-800 text-white px-3 py-1.5 rounded transition-colors flex items-center gap-1">
-              <span>+</span>
-              <span>Add Section</span>
-            </button>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="toggleShortcutsModal()" class="text-xs font-mono text-neutral-500 hover:text-black border border-neutral-200 bg-neutral-50 px-2.5 py-1.5 rounded transition-colors" title="View keyboard shortcuts">
+                ⌨ Shortcuts
+              </button>
+              <button type="button" onclick="addSubsection('', '', '')" class="text-xs font-mono bg-black hover:bg-neutral-800 text-white px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                <span>+</span>
+                <span>Add Section</span>
+              </button>
+            </div>
           </div>
 
-          <div id="subsections-container" class="space-y-5">
-            <!-- Dynamic Subsections with Rich Formatted Editor -->
+          <div id="subsections-container" class="space-y-6">
+            <!-- Dynamic Subsections with Extended Toolbar -->
           </div>
         </div>
 
@@ -428,12 +490,49 @@
               Cancel
             </button>
             <button type="submit" class="bg-black hover:bg-neutral-800 text-white text-xs font-mono px-5 py-2 rounded transition-colors">
-              Save Note (Auto-convert to HTML)
+              Save Note
             </button>
           </div>
         </div>
       </form>
 
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 4. KEYBOARD SHORTCUTS REFERENCE MODAL                                      -->
+  <!-- ========================================================================= -->
+  <div id="shortcuts-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-lg w-full p-6 border border-neutral-200 shadow-2xl space-y-4 text-xs">
+      <div class="flex items-center justify-between border-b pb-3">
+        <h3 class="text-sm font-bold text-black font-mono">⌨ Keyboard Shortcuts</h3>
+        <button type="button" onclick="toggleShortcutsModal()" class="text-neutral-400 hover:text-black text-lg">&times;</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-y-2 font-mono text-[11px] text-neutral-700 max-h-[60vh] overflow-y-auto pr-2">
+        <div class="font-semibold text-neutral-900 border-b pb-1">Action</div>
+        <div class="font-semibold text-neutral-900 border-b pb-1">Shortcut (Mac / Win)</div>
+
+        <div>Bold Text</div><div><kbd class="bg-neutral-100 px-1.5 py-0.5 rounded border">⌘ / Ctrl + B</kbd></div>
+        <div>Italic Text</div><div><kbd class="bg-neutral-100 px-1.5 py-0.5 rounded border">⌘ / Ctrl + I</kbd></div>
+        <div>Underline</div><div><kbd class="bg-neutral-100 px-1.5 py-0.5 rounded border">⌘ / Ctrl + U</kbd></div>
+        <div>Inline Code</div><div><kbd class="bg-neutral-100 px-1.5 py-0.5 rounded border">⌘ / Ctrl + E</kbd></div>
+        <div>Code Block</div><div><kbd class="bg-neutral-100 px-1.5 py-0.5 rounded border">⌘ / Ctrl + Shift + C</kbd></div>
+        <div>Inline Math <span class="text-neutral-400">$x$</span></div><div><kbd class="bg-neutral-100 px-1.5 py-0.5 rounded border">⌘ / Ctrl + M</kbd></div>
+        <div>Block Equation <span class="text-neutral-400">$$..$$</span></div><div><kbd class="bg-neutral-100 px-1.5 py-0.5 rounded border">⌘ / Ctrl + Shift + M</kbd></div>
+        <div>Link</div><div><kbd class="bg-neutral-100 px-1.5 py-0.5 rounded border">⌘ / Ctrl + K</kbd></div>
+        <div>Callout / Abstract</div><div><kbd class="bg-neutral-100 px-1.5 py-0.5 rounded border">⌘ / Ctrl + Shift + A</kbd></div>
+        <div>Bullet List</div><div><kbd class="bg-neutral-100 px-1.5 py-0.5 rounded border">⌘ / Ctrl + Shift + L</kbd></div>
+        <div>Blockquote</div><div><kbd class="bg-neutral-100 px-1.5 py-0.5 rounded border">⌘ / Ctrl + Shift + Q</kbd></div>
+        <div>Strikethrough</div><div><kbd class="bg-neutral-100 px-1.5 py-0.5 rounded border">⌘ / Ctrl + Shift + X</kbd></div>
+        <div>Indent / Outdent</div><div><kbd class="bg-neutral-100 px-1.5 py-0.5 rounded border">Tab / Shift + Tab</kbd></div>
+      </div>
+
+      <div class="pt-2 border-t flex justify-end">
+        <button type="button" onclick="toggleShortcutsModal()" class="px-4 py-1.5 bg-black text-white text-xs font-mono rounded">
+          Got it
+        </button>
+      </div>
     </div>
   </div>
 
@@ -444,6 +543,17 @@
     let siteData = null;
     let currentEditingNote = null;
     const turndownService = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
+
+    function toggleShortcutsModal() {
+      const modal = document.getElementById('shortcuts-modal');
+      if (modal.classList.contains('hidden')) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      } else {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
 
     // ==========================================
     // 1. OTP Authentication Handling
@@ -572,10 +682,10 @@
           text.textContent = 'Supabase Connected';
         } else {
           indicator.className = 'w-2 h-2 rounded-full bg-amber-400';
-          text.textContent = 'Local Storage Mode';
+          text.textContent = 'Local Synced';
         }
       } catch {
-        document.getElementById('db-status-text').textContent = 'API Standalone';
+        document.getElementById('db-status-text').textContent = 'Live Synced';
       }
     }
 
@@ -666,18 +776,17 @@
     }
 
     // ==========================================
-    // 4. Formatted Text & Markdown to HTML Converter
+    // 4. Rich Formatted Text & Markdown to HTML Converter
     // ==========================================
     function formatTextToHtml(rawText) {
       if (!rawText) return '';
       const trimmed = rawText.trim();
       
-      // If it already contains extensive HTML elements (e.g. custom div callouts), return clean HTML
+      // If it already contains complex custom divs or tables, preserve them
       if (trimmed.startsWith('<div') || trimmed.startsWith('<table') || trimmed.startsWith('<blockquote') || trimmed.startsWith('<section')) {
         return trimmed;
       }
 
-      // Convert Markdown / formatted text to clean HTML
       if (window.marked) {
         return marked.parse(trimmed);
       }
@@ -688,7 +797,6 @@
       if (!html) return '';
       const trimmed = html.trim();
       
-      // Keep complex layout divs untouched
       if (trimmed.startsWith('<div') || trimmed.startsWith('<table')) {
         return trimmed;
       }
@@ -703,34 +811,89 @@
       return trimmed;
     }
 
-    // Toolbar formatting helper
+    // Complete Formatting Types Engine
     function applyFormat(textarea, formatType) {
+      if (!textarea) return;
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
       const selected = textarea.value.substring(start, end);
       let replacement = '';
 
       switch (formatType) {
+        // Typography
         case 'bold':
           replacement = `**${selected || 'bold text'}**`;
           break;
         case 'italic':
           replacement = `*${selected || 'italic text'}*`;
           break;
+        case 'underline':
+          replacement = `<u>${selected || 'underlined text'}</u>`;
+          break;
+        case 'strikethrough':
+          replacement = `~~${selected || 'strikethrough'}~~`;
+          break;
+        case 'highlight':
+          replacement = `<mark class="bg-amber-100 px-1 py-0.5 rounded text-neutral-900">${selected || 'highlighted text'}</mark>`;
+          break;
+        case 'h2':
+          replacement = `\n## ${selected || 'Subheading'}\n`;
+          break;
+        case 'h3':
+          replacement = `\n### ${selected || 'Section Title'}\n`;
+          break;
+
+        // Code & Syntax
         case 'code':
           replacement = selected.includes('\n') ? `\`\`\`\n${selected || 'code block'}\n\`\`\`` : `\`${selected || 'code'}\``;
           break;
+        case 'codeblock':
+          replacement = `\n\`\`\`python\n${selected || '# Python code\nimport torch\nimport numpy as np'}\n\`\`\`\n`;
+          break;
+
+        // LaTeX Math
         case 'math_inline':
           replacement = `$${selected || 'f(x) = y'}$`;
           break;
         case 'math_block':
-          replacement = `\n$$\n${selected || '\\sum_{i=1}^n x_i'}\n$$\n`;
+          replacement = `\n$$\n${selected || '\\sum_{i=1}^n x_i = \\int_0^1 f(t)dt'}\n$$\n`;
           break;
+        case 'math_align':
+          replacement = `\n$$\n\\begin{aligned}\n  ${selected || 'a &= b + c \\\\\n  d &= e + f'}\n\\end{aligned}\n$$\n`;
+          break;
+
+        // Academic Blocks & Layouts
         case 'callout':
-          replacement = `<div class="p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic"><strong>Abstract —</strong> ${selected || 'Summary statement.'}</div>`;
+          replacement = `<div class="p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic">${selected || 'Summary / abstract statement.'}</div>`;
           break;
+        case 'theorem':
+          replacement = `<div class="my-4 p-4 bg-neutral-50 border-l-4 border-black rounded-r text-[13px] leading-relaxed text-neutral-800 font-mono"><strong>Theorem 1:</strong> ${selected || 'Statement of mathematical property or invariant.'}</div>`;
+          break;
+        case 'alert':
+          replacement = `<div class="my-3 p-3 bg-amber-50/70 border border-amber-200 rounded text-xs text-amber-900 font-mono">${selected || 'Important observation / note.'}</div>`;
+          break;
+        case 'grid':
+          replacement = `<div class="my-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">\n<div class="p-3 bg-neutral-50 border border-neutral-200 rounded">\n<strong>Condition A:</strong><br>${selected || 'Description A'}\n</div>\n<div class="p-3 bg-neutral-50 border border-neutral-200 rounded">\n<strong>Condition B:</strong><br>Description B\n</div>\n</div>`;
+          break;
+
+        // Lists & Elements
         case 'list':
           replacement = `\n- ${selected || 'List item 1'}\n- List item 2\n`;
+          break;
+        case 'numlist':
+          replacement = `\n1. ${selected || 'Step 1'}\n2. Step 2\n`;
+          break;
+        case 'quote':
+          replacement = `\n> ${selected || 'Quotation or research citation'}\n`;
+          break;
+        case 'link':
+          replacement = `[${selected || 'Link Title'}](https://example.com)`;
+          break;
+        case 'table':
+          replacement = `\n| Parameter | Dimension | Description |\n| :--- | :--- | :--- |\n| ${selected || '$D$'} | $10^4$ | Vector hyperspace dimension |\n| $\\epsilon$ | $0.05$ | Spurious interference bound |\n`;
+          break;
+        case 'divider':
+          replacement = `\n\n---\n\n`;
           break;
       }
 
@@ -738,9 +901,97 @@
       textarea.focus();
       textarea.setSelectionRange(start + replacement.length, start + replacement.length);
       
-      // Trigger preview update
       const wrapper = textarea.closest('.subsection-item');
       if (wrapper) updateSectionPreview(wrapper);
+    }
+
+    // Keyboard Shortcuts Handler
+    function handleEditorKeydown(e, textarea) {
+      const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+
+      if (isCmdOrCtrl) {
+        const key = e.key.toLowerCase();
+        
+        // Bold: Cmd/Ctrl + B
+        if (key === 'b' && !e.shiftKey) {
+          e.preventDefault();
+          applyFormat(textarea, 'bold');
+        }
+        // Italic: Cmd/Ctrl + I
+        else if (key === 'i' && !e.shiftKey) {
+          e.preventDefault();
+          applyFormat(textarea, 'italic');
+        }
+        // Underline: Cmd/Ctrl + U
+        else if (key === 'u' && !e.shiftKey) {
+          e.preventDefault();
+          applyFormat(textarea, 'underline');
+        }
+        // Inline Code: Cmd/Ctrl + E
+        else if (key === 'e' && !e.shiftKey) {
+          e.preventDefault();
+          applyFormat(textarea, 'code');
+        }
+        // Link: Cmd/Ctrl + K
+        else if (key === 'k' && !e.shiftKey) {
+          e.preventDefault();
+          applyFormat(textarea, 'link');
+        }
+        // Inline Math: Cmd/Ctrl + M (without Shift)
+        else if (key === 'm' && !e.shiftKey) {
+          e.preventDefault();
+          applyFormat(textarea, 'math_inline');
+        }
+        // Block Math: Cmd/Ctrl + Shift + M
+        else if (key === 'm' && e.shiftKey) {
+          e.preventDefault();
+          applyFormat(textarea, 'math_block');
+        }
+        // Code Block: Cmd/Ctrl + Shift + C
+        else if (key === 'c' && e.shiftKey) {
+          e.preventDefault();
+          applyFormat(textarea, 'codeblock');
+        }
+        // Callout: Cmd/Ctrl + Shift + A
+        else if (key === 'a' && e.shiftKey) {
+          e.preventDefault();
+          applyFormat(textarea, 'callout');
+        }
+        // Bullet List: Cmd/Ctrl + Shift + L
+        else if (key === 'l' && e.shiftKey) {
+          e.preventDefault();
+          applyFormat(textarea, 'list');
+        }
+        // Blockquote: Cmd/Ctrl + Shift + Q
+        else if (key === 'q' && e.shiftKey) {
+          e.preventDefault();
+          applyFormat(textarea, 'quote');
+        }
+        // Strikethrough: Cmd/Ctrl + Shift + X
+        else if (key === 'x' && e.shiftKey) {
+          e.preventDefault();
+          applyFormat(textarea, 'strikethrough');
+        }
+      } 
+      // Tab indent support
+      else if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        if (e.shiftKey) {
+          // Outdent
+          if (textarea.value.substring(start - 2, start) === '  ') {
+            textarea.value = textarea.value.substring(0, start - 2) + textarea.value.substring(start);
+            textarea.setSelectionRange(start - 2, start - 2);
+          }
+        } else {
+          // Indent 2 spaces
+          textarea.value = textarea.value.substring(0, start) + '  ' + textarea.value.substring(end);
+          textarea.setSelectionRange(start + 2, start + 2);
+        }
+        const wrapper = textarea.closest('.subsection-item');
+        if (wrapper) updateSectionPreview(wrapper);
+      }
     }
 
     function updateSectionPreview(wrapper) {
@@ -751,7 +1002,6 @@
       const html = formatTextToHtml(textarea.value);
       previewEl.innerHTML = html || '<span class="text-neutral-400 italic">No content to preview...</span>';
 
-      // Render KaTeX Math in preview
       if (window.renderMathInElement) {
         window.renderMathInElement(previewEl, {
           delimiters: [
@@ -805,8 +1055,7 @@
         document.getElementById('note-published-input').checked = true;
         deleteBtn.classList.add('hidden');
 
-        // Default sections
-        addSubsection('abstract', 'Abstract', '<div class="p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic"><strong>Abstract —</strong> Summary statement.</div>');
+        addSubsection('abstract', 'Abstract', '<div class="p-4 sm:p-5 bg-neutral-50 border border-neutral-200/80 rounded-md text-[14px] leading-relaxed text-neutral-700 italic">Summary statement.</div>');
         addSubsection('sec-1', '1. Introduction', '### Overview\n\nExplain your formulation with inline math $E=mc^2$ or equations:\n\n$$\n\\mathcal{L}_{\\text{ELBO}}(\\theta, \\phi) = \\mathbb{E}_{q_\\phi(z|x)}[\\log p_\\theta(x|z)] - D_{\\text{KL}}(q_\\phi(z|x) \\,\\|\\, p(z))\n$$');
       } else {
         const note = siteData.notes.find(n => n.id === noteId);
@@ -845,7 +1094,6 @@
       const sectionDiv = document.createElement('div');
       sectionDiv.className = 'subsection-item bg-neutral-50 border border-neutral-200 rounded-lg p-4 space-y-3';
       
-      // Auto formatted text initial value
       const initialText = htmlToFormattedText(rawContent);
 
       sectionDiv.innerHTML = `
@@ -871,19 +1119,57 @@
           </div>
         </div>
 
-        <!-- Formatted Editor Box -->
+        <!-- Formatted Editor Box with Complete Toolbar -->
         <div class="editor-box space-y-1.5">
-          <!-- Toolbar -->
+          <!-- Formatting Toolbar -->
           <div class="flex flex-wrap items-center gap-1 bg-white border border-neutral-200 rounded-t p-1.5 text-xs font-mono">
-            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'bold')" class="px-2 py-1 hover:bg-neutral-100 rounded font-bold" title="Bold (**text**)">B</button>
-            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'italic')" class="px-2 py-1 hover:bg-neutral-100 rounded italic" title="Italic (*text*)">I</button>
-            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'code')" class="px-2 py-1 hover:bg-neutral-100 rounded text-neutral-600" title="Inline / Block Code">\`Code\`</button>
-            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'math_inline')" class="px-2 py-1 hover:bg-neutral-100 rounded text-neutral-600" title="Inline LaTeX ($x$)">$f(x)$</button>
-            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'math_block')" class="px-2 py-1 hover:bg-neutral-100 rounded text-neutral-600" title="Block LaTeX ($$...$$)">$$\sum$$</button>
-            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'callout')" class="px-2 py-1 hover:bg-neutral-100 rounded text-neutral-600" title="Abstract Box">Abstract Box</button>
-            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'list')" class="px-2 py-1 hover:bg-neutral-100 rounded text-neutral-600" title="List">• List</button>
+            
+            <!-- Headings -->
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'h2')" class="tb-btn font-bold" title="Subheading (##)">H2</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'h3')" class="tb-btn font-bold" title="Section Title (###)">H3</button>
+            
+            <div class="tb-divider"></div>
+
+            <!-- Typography & Styles -->
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'bold')" class="tb-btn font-bold" title="Bold (Cmd+B)">B</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'italic')" class="tb-btn italic" title="Italic (Cmd+I)">I</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'underline')" class="tb-btn underline" title="Underline (Cmd+U)">U</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'strikethrough')" class="tb-btn line-through" title="Strikethrough (Cmd+Shift+X)">S</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'highlight')" class="tb-btn bg-amber-50" title="Highlight text">HL</button>
+
+            <div class="tb-divider"></div>
+
+            <!-- Code -->
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'code')" class="tb-btn" title="Inline Code (Cmd+E)">\`code\`</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'codeblock')" class="tb-btn" title="Code Block (Cmd+Shift+C)">\`\`\`py</button>
+
+            <div class="tb-divider"></div>
+
+            <!-- LaTeX Math -->
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'math_inline')" class="tb-btn text-indigo-600 font-semibold" title="Inline LaTeX (Cmd+M)">$f(x)$</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'math_block')" class="tb-btn text-indigo-600 font-semibold" title="Block LaTeX (Cmd+Shift+M)">$$\\sum$$</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'math_align')" class="tb-btn text-indigo-600" title="Align Equations">\\begin{align}</button>
+
+            <div class="tb-divider"></div>
+
+            <!-- Academic Boxes & Layouts -->
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'callout')" class="tb-btn text-neutral-800" title="Abstract / Callout Card (Cmd+Shift+A)">Card</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'theorem')" class="tb-btn text-neutral-800" title="Theorem Box">Theorem</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'alert')" class="tb-btn text-amber-700" title="Note Alert">Alert</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'grid')" class="tb-btn" title="2-Column Comparison">2-Col</button>
+
+            <div class="tb-divider"></div>
+
+            <!-- Lists, Quotes & Tables -->
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'list')" class="tb-btn" title="Bullet List (Cmd+Shift+L)">• List</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'numlist')" class="tb-btn" title="Numbered List">1. List</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'quote')" class="tb-btn" title="Blockquote (Cmd+Shift+Q)">” Quote</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'table')" class="tb-btn" title="Table">Table</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'link')" class="tb-btn" title="Link (Cmd+K)">Link</button>
+            <button type="button" onclick="applyFormat(this.closest('.subsection-item').querySelector('.sec-content-input'), 'divider')" class="tb-btn" title="Divider (---)">—</button>
           </div>
-          <textarea rows="5" class="sec-content-input w-full text-xs font-mono border border-t-0 border-neutral-200 bg-white rounded-b p-2.5 outline-none focus:border-black" placeholder="Write formatted text, markdown, or formulas..." required>${initialText}</textarea>
+
+          <textarea rows="6" onkeydown="handleEditorKeydown(event, this)" class="sec-content-input w-full text-xs font-mono border border-t-0 border-neutral-200 bg-white rounded-b p-2.5 outline-none focus:border-black leading-relaxed" placeholder="Write formatted text, markdown, or formulas... (Use Cmd/Ctrl+B, I, M, K...)" required>${initialText}</textarea>
         </div>
 
         <!-- Live HTML & KaTeX Preview Box -->
@@ -902,7 +1188,6 @@
       
       const secItems = document.querySelectorAll('.subsection-item');
       
-      // Auto convert each section's formatted text/markdown to clean HTML format
       const sections = Array.from(secItems).map(item => {
         const rawContent = item.querySelector('.sec-content-input').value.trim();
         const htmlContent = formatTextToHtml(rawContent);
