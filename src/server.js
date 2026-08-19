@@ -20,9 +20,22 @@ app.use('*', cors({
   allowHeaders: ['Content-Type', 'Authorization', 'x-secret-pin']
 }));
 
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const ROOT_DIR = resolve(__dirname, '..');
+
 // Local database state from content.json
 let localData = null;
-const CONTENT_PATH = resolve('./content.json');
+const CONTENT_PATH = existsSync(join(ROOT_DIR, 'src/db/content.json'))
+  ? join(ROOT_DIR, 'src/db/content.json')
+  : join(ROOT_DIR, 'content.json');
+
+const SCHEMA_PATH = existsSync(join(ROOT_DIR, 'src/db/schema.json'))
+  ? join(ROOT_DIR, 'src/db/schema.json')
+  : join(ROOT_DIR, 'schema.json');
 
 function loadLocalData() {
   try {
@@ -56,7 +69,11 @@ function verifyAdmin(c) {
 // ==========================================
 // Dashboard & HTML Route
 // ==========================================
-app.get('/dashboard', serveStatic({ path: './dashboard.html' }));
+const DASHBOARD_PATH = existsSync(join(ROOT_DIR, 'public/dashboard.html'))
+  ? './public/dashboard.html'
+  : './dashboard.html';
+
+app.get('/dashboard', serveStatic({ path: DASHBOARD_PATH }));
 
 // ==========================================
 // API Endpoints
@@ -521,7 +538,7 @@ app.put('/api/about', async (c) => {
 // JSON Schema endpoint: GET /api/schema
 app.get('/api/schema', (c) => {
   try {
-    const schemaRaw = readFileSync(resolve('./schema.json'), 'utf-8');
+    const schemaRaw = readFileSync(SCHEMA_PATH, 'utf-8');
     return c.json(JSON.parse(schemaRaw));
   } catch (err) {
     return c.json({ status: 'error', message: 'Schema unavailable' }, 500);
@@ -531,7 +548,8 @@ app.get('/api/schema', (c) => {
 // ==========================================
 // Static File Serving
 // ==========================================
-app.use('/*', serveStatic({ root: './' }));
+const STATIC_ROOT = existsSync(join(ROOT_DIR, 'public')) ? './public' : './';
+app.use('/*', serveStatic({ root: STATIC_ROOT }));
 
 // 404 Fallback
 app.notFound((c) => {
