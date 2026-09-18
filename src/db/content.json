@@ -3,7 +3,7 @@
     "authorName": "Karan",
     "logoText": "Karan",
     "avatarUrl": "avatar.jpg",
-    "pageTitle": "Karan — Notes & Exploratory Research",
+    "pageTitle": "Karan — Notes & Exploratory Research (SQLite)",
     "metaDescription": "Personal notebook and exploratory research on learning algorithms, AI for science, and quantum computing.",
     "copyrightYear": 2026,
     "socialLinks": [
@@ -22,45 +22,20 @@
     ]
   },
   "hero": {
-    "heading": "Notes and exploratory research.",
+    "heading": "Notes and exploratory research with local SQLite.",
     "bioHighlight": "Karan",
     "bioIntro": "I think about learning algorithms, AI for science, and quantum computing.",
     "moreAboutText": "More about me.",
     "moreAboutAnchor": "#about"
   },
   "about": {
-    "sectionLabel": "About & Focus",
+    "sectionLabel": "About & Research Focus",
     "paragraphs": [
       "I explore representations in neural systems, high-dimensional computing, and how algebraic mathematical structures translate into computational substrates.",
       "Currently spending time writing notes, building small exploratory models, and reading literature across machine learning theory, cognitive architectures, and physics-informed computational frameworks."
     ]
   },
   "notes": [
-    {
-      "id": "test-note-1",
-      "slug": "test-note-1",
-      "type": "NOTE",
-      "date": "2026-09-18",
-      "formattedDate": "Sep 18, 2026",
-      "readTime": "5 min",
-      "tags": [
-        "#sqlite",
-        "#test"
-      ],
-      "title": "Test SQLite Note",
-      "summary": "Testing embedded SQLite database mutations.",
-      "subtitle": "",
-      "published": true,
-      "sort_order": 0,
-      "sections": [
-        {
-          "id": "test-sec-1",
-          "title": "Introduction",
-          "content": "<p>Hello SQLite!</p>",
-          "sort_order": 1
-        }
-      ]
-    },
     {
       "id": "note-1",
       "slug": "bundling-binding-representation",

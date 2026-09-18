@@ -399,8 +399,31 @@ export function getNoteByIdOrSlug(idOrSlug) {
 
 export function upsertNote(note) {
   const txn = db.transaction(() => {
-    const existing = db.prepare('SELECT id, sort_order FROM notes WHERE id = ?').get(note.id);
-    const defaultSort = existing ? existing.sort_order : 0;
+    const existing = db.prepare('SELECT * FROM notes WHERE id = ?').get(note.id);
+
+    let existingTags = [];
+    if (existing?.tags) {
+      try {
+        existingTags = typeof existing.tags === 'string' ? JSON.parse(existing.tags) : existing.tags;
+      } catch {
+        existingTags = [];
+      }
+    }
+
+    const merged = {
+      id: note.id,
+      slug: note.slug ?? existing?.slug ?? note.id,
+      type: note.type ?? existing?.type ?? 'NOTE',
+      date: note.date ?? existing?.date ?? new Date().toISOString().split('T')[0],
+      formatted_date: note.formattedDate ?? note.date ?? existing?.formatted_date ?? (new Date().toISOString().split('T')[0]),
+      read_time: note.readTime ?? existing?.read_time ?? '15 min',
+      tags: JSON.stringify(note.tags ?? existingTags ?? []),
+      title: note.title ?? existing?.title ?? 'Untitled',
+      summary: note.summary ?? existing?.summary ?? '',
+      subtitle: note.subtitle ?? existing?.subtitle ?? '',
+      published: note.published !== undefined ? (note.published ? 1 : 0) : (existing?.published ?? 1),
+      sort_order: typeof note.sort_order === 'number' ? note.sort_order : (existing?.sort_order ?? 0)
+    };
 
     const stmt = db.prepare(`
       INSERT INTO notes (id, slug, type, date, formatted_date, read_time, tags, title, summary, subtitle, published, sort_order)
@@ -419,20 +442,7 @@ export function upsertNote(note) {
         sort_order = excluded.sort_order
     `);
 
-    stmt.run({
-      id: note.id,
-      slug: note.slug || note.id,
-      type: note.type || 'NOTE',
-      date: note.date || new Date().toISOString().split('T')[0],
-      formatted_date: note.formattedDate || note.date,
-      read_time: note.readTime || '15 min',
-      tags: JSON.stringify(note.tags || []),
-      title: note.title,
-      summary: note.summary || '',
-      subtitle: note.subtitle || '',
-      published: note.published !== false ? 1 : 0,
-      sort_order: typeof note.sort_order === 'number' ? note.sort_order : defaultSort
-    });
+    stmt.run(merged);
 
     if (Array.isArray(note.sections)) {
       db.prepare('DELETE FROM note_sections WHERE note_id = ?').run(note.id);
