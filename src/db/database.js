@@ -15,9 +15,6 @@ if (!existsSync(DB_DIR)) {
 
 const DB_PATH = process.env.DATABASE_PATH || join(DB_DIR, 'portfolio.db');
 const SCHEMA_FILE = join(DB_DIR, 'schema.sql');
-const CONTENT_FILE = existsSync(join(ROOT_DIR, 'src/db/content.json'))
-  ? join(ROOT_DIR, 'src/db/content.json')
-  : join(ROOT_DIR, 'content.json');
 
 // Initialize SQLite database instance
 const db = new Database(DB_PATH);
@@ -26,207 +23,24 @@ const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
-// Initialize schema
+// Initialize schema and seed from schema.sql
 function initSchema() {
   if (existsSync(SCHEMA_FILE)) {
     const schemaSql = readFileSync(SCHEMA_FILE, 'utf-8');
     db.exec(schemaSql);
-  } else {
-    // Embedded fallback schema if schema.sql is not found
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS portfolio_meta (
-        id TEXT PRIMARY KEY DEFAULT 'main',
-        author_name TEXT NOT NULL DEFAULT 'Karan',
-        logo_text TEXT NOT NULL DEFAULT 'Karan',
-        avatar_url TEXT DEFAULT 'avatar.jpg',
-        page_title TEXT NOT NULL,
-        meta_description TEXT,
-        copyright_year INTEGER DEFAULT 2026,
-        social_links TEXT DEFAULT '[]',
-        updated_at TEXT DEFAULT (datetime('now'))
-      );
-      CREATE TABLE IF NOT EXISTS portfolio_hero (
-        id TEXT PRIMARY KEY DEFAULT 'main',
-        heading TEXT NOT NULL DEFAULT 'Notes and exploratory research.',
-        bio_highlight TEXT NOT NULL DEFAULT 'Karan',
-        bio_intro TEXT NOT NULL,
-        more_about_text TEXT DEFAULT 'More about me.',
-        more_about_anchor TEXT DEFAULT '#about'
-      );
-      CREATE TABLE IF NOT EXISTS portfolio_about (
-        id TEXT PRIMARY KEY DEFAULT 'main',
-        section_label TEXT DEFAULT 'About & Focus',
-        paragraphs TEXT NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS notes (
-        id TEXT PRIMARY KEY,
-        slug TEXT UNIQUE NOT NULL,
-        type TEXT NOT NULL DEFAULT 'NOTE',
-        date TEXT NOT NULL,
-        formatted_date TEXT NOT NULL,
-        read_time TEXT NOT NULL DEFAULT '15 min',
-        tags TEXT DEFAULT '[]',
-        title TEXT NOT NULL,
-        summary TEXT NOT NULL,
-        subtitle TEXT,
-        published INTEGER DEFAULT 1,
-        sort_order INTEGER DEFAULT 0,
-        created_at TEXT DEFAULT (datetime('now'))
-      );
-      CREATE TABLE IF NOT EXISTS note_sections (
-        id TEXT PRIMARY KEY,
-        note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
-        section_anchor_id TEXT NOT NULL,
-        title TEXT NOT NULL,
-        content TEXT NOT NULL,
-        sort_order INTEGER NOT NULL DEFAULT 0
-      );
-      CREATE INDEX IF NOT EXISTS idx_notes_slug ON notes(slug);
-      CREATE INDEX IF NOT EXISTS idx_notes_sort ON notes(sort_order ASC, date DESC);
-      CREATE INDEX IF NOT EXISTS idx_note_sections_note_id ON note_sections(note_id, sort_order ASC);
-    `);
   }
 }
 
 initSchema();
 
-// Auto-seed database from content.json if tables are empty
-export function seedDatabase(data = null) {
-  let content = data;
-  if (!content && existsSync(CONTENT_FILE)) {
-    try {
-      const raw = readFileSync(CONTENT_FILE, 'utf-8');
-      content = JSON.parse(raw);
-    } catch (err) {
-      console.error('Failed to read content.json for seeding:', err);
-    }
+// Seed database from schema.sql
+export function seedDatabase() {
+  if (existsSync(SCHEMA_FILE)) {
+    const sql = readFileSync(SCHEMA_FILE, 'utf-8');
+    db.exec(sql);
+    return true;
   }
-
-  if (!content) return false;
-
-  const runSeed = db.transaction(() => {
-    // 1. Meta
-    if (content.meta) {
-      const metaStmt = db.prepare(`
-        INSERT INTO portfolio_meta (id, author_name, logo_text, avatar_url, page_title, meta_description, copyright_year, social_links)
-        VALUES ('main', @authorName, @logoText, @avatarUrl, @pageTitle, @metaDescription, @copyrightYear, @socialLinks)
-        ON CONFLICT(id) DO UPDATE SET
-          author_name = excluded.author_name,
-          logo_text = excluded.logo_text,
-          avatar_url = excluded.avatar_url,
-          page_title = excluded.page_title,
-          meta_description = excluded.meta_description,
-          copyright_year = excluded.copyright_year,
-          social_links = excluded.social_links,
-          updated_at = datetime('now')
-      `);
-      metaStmt.run({
-        authorName: content.meta.authorName || 'Karan',
-        logoText: content.meta.logoText || 'Karan',
-        avatarUrl: content.meta.avatarUrl || 'avatar.jpg',
-        pageTitle: content.meta.pageTitle || 'Karan — Notes & Exploratory Research',
-        metaDescription: content.meta.metaDescription || '',
-        copyrightYear: content.meta.copyrightYear || 2026,
-        socialLinks: JSON.stringify(content.meta.socialLinks || [])
-      });
-    }
-
-    // 2. Hero
-    if (content.hero) {
-      const heroStmt = db.prepare(`
-        INSERT INTO portfolio_hero (id, heading, bio_highlight, bio_intro, more_about_text, more_about_anchor)
-        VALUES ('main', @heading, @bioHighlight, @bioIntro, @moreAboutText, @moreAboutAnchor)
-        ON CONFLICT(id) DO UPDATE SET
-          heading = excluded.heading,
-          bio_highlight = excluded.bio_highlight,
-          bio_intro = excluded.bio_intro,
-          more_about_text = excluded.more_about_text,
-          more_about_anchor = excluded.more_about_anchor
-      `);
-      heroStmt.run({
-        heading: content.hero.heading || 'Notes and exploratory research.',
-        bioHighlight: content.hero.bioHighlight || 'Karan',
-        bioIntro: content.hero.bioIntro || '',
-        moreAboutText: content.hero.moreAboutText || 'More about me.',
-        moreAboutAnchor: content.hero.moreAboutAnchor || '#about'
-      });
-    }
-
-    // 3. About
-    if (content.about) {
-      const aboutStmt = db.prepare(`
-        INSERT INTO portfolio_about (id, section_label, paragraphs)
-        VALUES ('main', @sectionLabel, @paragraphs)
-        ON CONFLICT(id) DO UPDATE SET
-          section_label = excluded.section_label,
-          paragraphs = excluded.paragraphs
-      `);
-      aboutStmt.run({
-        sectionLabel: content.about.sectionLabel || 'About & Focus',
-        paragraphs: JSON.stringify(content.about.paragraphs || [])
-      });
-    }
-
-    // 4. Notes & Sections
-    if (Array.isArray(content.notes)) {
-      const noteStmt = db.prepare(`
-        INSERT INTO notes (id, slug, type, date, formatted_date, read_time, tags, title, summary, subtitle, published, sort_order)
-        VALUES (@id, @slug, @type, @date, @formatted_date, @read_time, @tags, @title, @summary, @subtitle, @published, @sort_order)
-        ON CONFLICT(id) DO UPDATE SET
-          slug = excluded.slug,
-          type = excluded.type,
-          date = excluded.date,
-          formatted_date = excluded.formatted_date,
-          read_time = excluded.read_time,
-          tags = excluded.tags,
-          title = excluded.title,
-          summary = excluded.summary,
-          subtitle = excluded.subtitle,
-          published = excluded.published,
-          sort_order = excluded.sort_order
-      `);
-
-      const deleteSectionsStmt = db.prepare(`DELETE FROM note_sections WHERE note_id = ?`);
-      const insertSectionStmt = db.prepare(`
-        INSERT INTO note_sections (id, note_id, section_anchor_id, title, content, sort_order)
-        VALUES (@id, @note_id, @section_anchor_id, @title, @content, @sort_order)
-      `);
-
-      content.notes.forEach((note, noteIdx) => {
-        noteStmt.run({
-          id: note.id,
-          slug: note.slug || note.id,
-          type: note.type || 'NOTE',
-          date: note.date || new Date().toISOString().split('T')[0],
-          formatted_date: note.formattedDate || note.date,
-          read_time: note.readTime || '15 min',
-          tags: JSON.stringify(note.tags || []),
-          title: note.title,
-          summary: note.summary || '',
-          subtitle: note.subtitle || '',
-          published: note.published !== false ? 1 : 0,
-          sort_order: typeof note.sort_order === 'number' ? note.sort_order : noteIdx + 1
-        });
-
-        if (Array.isArray(note.sections)) {
-          deleteSectionsStmt.run(note.id);
-          note.sections.forEach((sec, secIdx) => {
-            insertSectionStmt.run({
-              id: crypto.randomUUID(),
-              note_id: note.id,
-              section_anchor_id: sec.id,
-              title: sec.title,
-              content: sec.content,
-              sort_order: secIdx + 1
-            });
-          });
-        }
-      });
-    }
-  });
-
-  runSeed();
-  return true;
+  return false;
 }
 
 // Auto-seed if database has no notes
@@ -587,6 +401,53 @@ export function getDatabaseHealth() {
     return {
       provider: 'sqlite',
       connected: false,
+      error: err.message
+    };
+  }
+}
+
+export function getDatabaseSchema() {
+  try {
+    const tables = db.prepare(`
+      SELECT name, sql FROM sqlite_master 
+      WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+      ORDER BY name
+    `).all();
+
+    const schemaInfo = {};
+    for (const table of tables) {
+      const columns = db.prepare(`PRAGMA table_info('${table.name}')`).all();
+      const foreignKeys = db.prepare(`PRAGMA foreign_key_list('${table.name}')`).all();
+      const indexes = db.prepare(`PRAGMA index_list('${table.name}')`).all();
+
+      schemaInfo[table.name] = {
+        ddl: table.sql,
+        columns: columns.map(c => ({
+          cid: c.cid,
+          name: c.name,
+          type: c.type,
+          notnull: Boolean(c.notnull),
+          defaultValue: c.dflt_value,
+          primaryKey: Boolean(c.pk)
+        })),
+        foreignKeys: foreignKeys.map(fk => ({
+          from: fk.from,
+          table: fk.table,
+          to: fk.to,
+          onDelete: fk.on_delete
+        })),
+        indexes: indexes.map(idx => idx.name)
+      };
+    }
+
+    return {
+      provider: 'sqlite',
+      version: db.prepare('SELECT sqlite_version() as version').get()?.version,
+      tables: schemaInfo
+    };
+  } catch (err) {
+    return {
+      provider: 'sqlite',
       error: err.message
     };
   }

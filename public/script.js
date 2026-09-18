@@ -371,28 +371,20 @@ function setupReaderScrollSpy() {
   updateActiveHeading();
 }
 
-// Initialize Application Data from Hono API (or content.json)
+// Initialize Application Data from Hono SQLite API
 async function initApp() {
   // Initialize background drizzle animation
   drizzleInstance = new DrizzleAnimation('drizzle-canvas');
 
-  // Try fetching from Hono /api/portfolio endpoint first, fallback to content.json
+  // Fetch portfolio from Hono /api/portfolio SQLite endpoint
   try {
     const apiRes = await fetch('/api/portfolio');
     if (apiRes.ok) {
       const json = await apiRes.json();
       siteData = json.data;
-    } else {
-      const fileRes = await fetch('content.json');
-      if (fileRes.ok) siteData = await fileRes.json();
     }
   } catch (err) {
-    try {
-      const fileRes = await fetch('content.json');
-      if (fileRes.ok) siteData = await fileRes.json();
-    } catch (e) {
-      console.warn('Using local client state');
-    }
+    console.warn('Error fetching portfolio from SQLite API:', err);
   }
 
   // Dynamically render the entire landing page with API data

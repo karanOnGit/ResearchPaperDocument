@@ -3,7 +3,7 @@ import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
@@ -16,7 +16,8 @@ import {
   updateMeta,
   updateHero,
   updateAbout,
-  getDatabaseHealth
+  getDatabaseHealth,
+  getDatabaseSchema
 } from './db/database.js';
 
 dotenv.config();
@@ -34,24 +35,6 @@ app.use('*', cors({
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const ROOT_DIR = resolve(__dirname, '..');
-
-const CONTENT_PATH = existsSync(join(ROOT_DIR, 'src/db/content.json'))
-  ? join(ROOT_DIR, 'src/db/content.json')
-  : join(ROOT_DIR, 'content.json');
-
-const SCHEMA_PATH = existsSync(join(ROOT_DIR, 'src/db/schema.json'))
-  ? join(ROOT_DIR, 'src/db/schema.json')
-  : join(ROOT_DIR, 'schema.json');
-
-// Helper to keep content.json in sync as a portable snapshot backup
-function syncToJsonBackup() {
-  try {
-    const portfolio = getPortfolio();
-    writeFileSync(CONTENT_PATH, JSON.stringify(portfolio, null, 2), 'utf-8');
-  } catch (err) {
-    console.error('Warning: Error syncing content.json backup:', err.message);
-  }
-}
 
 // Secret PIN Auth Verification
 const SECRET_PIN = process.env.ADMIN_PIN || '1107';
@@ -75,7 +58,7 @@ app.get('/dashboard', serveStatic({ path: DASHBOARD_PATH }));
 // API Endpoints
 // ==========================================
 
-// 1. Health Check
+// 1. Health Check: GET /health
 app.get('/health', async (c) => {
   const dbHealth = getDatabaseHealth();
 
@@ -159,7 +142,6 @@ app.post('/api/notes', async (c) => {
   }
 
   const savedNote = upsertNote(note);
-  syncToJsonBackup();
 
   return c.json({
     status: 'success',
@@ -176,7 +158,6 @@ app.put('/api/notes/:id', async (c) => {
   const updatedData = await c.req.json().catch(() => ({}));
 
   const savedNote = upsertNote({ ...updatedData, id });
-  syncToJsonBackup();
 
   return c.json({
     status: 'success',
@@ -191,7 +172,6 @@ app.delete('/api/notes/:id', async (c) => {
 
   const id = c.req.param('id');
   const deleted = deleteNote(id);
-  syncToJsonBackup();
 
   if (deleted) {
     return c.json({ status: 'success', message: `Note '${id}' deleted successfully` });
@@ -206,7 +186,6 @@ app.put('/api/meta', async (c) => {
 
   const meta = await c.req.json().catch(() => ({}));
   const updated = updateMeta(meta);
-  syncToJsonBackup();
 
   return c.json({
     status: 'success',
@@ -221,7 +200,6 @@ app.put('/api/hero', async (c) => {
 
   const hero = await c.req.json().catch(() => ({}));
   const updated = updateHero(hero);
-  syncToJsonBackup();
 
   return c.json({
     status: 'success',
@@ -236,7 +214,6 @@ app.put('/api/about', async (c) => {
 
   const about = await c.req.json().catch(() => ({}));
   const updated = updateAbout(about);
-  syncToJsonBackup();
 
   return c.json({
     status: 'success',
@@ -245,14 +222,10 @@ app.put('/api/about', async (c) => {
   });
 });
 
-// JSON Schema endpoint: GET /api/schema
+// SQLite Database Schema endpoint: GET /api/schema
 app.get('/api/schema', (c) => {
-  try {
-    const schemaRaw = readFileSync(SCHEMA_PATH, 'utf-8');
-    return c.json(JSON.parse(schemaRaw));
-  } catch (err) {
-    return c.json({ status: 'error', message: 'Schema unavailable' }, 500);
-  }
+  const schema = getDatabaseSchema();
+  return c.json(schema);
 });
 
 // ==========================================

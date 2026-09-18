@@ -27,7 +27,7 @@ The server serves:
 
 ```mermaid
 graph TD
-    A[Hono Server / content.json] --> B[meta]
+    A[Hono Server / SQLite DB] --> B[meta]
     A --> C[hero]
     A --> D[about]
     A --> E[notes array]
@@ -184,14 +184,14 @@ Returns the complete long-form paper with all sections for the Google Docs reade
 - `GET /api/meta`: Returns website branding, author, title, avatar URL, copyright.
 - `GET /api/hero`: Returns hero heading, bio line, and anchor link.
 - `GET /api/about`: Returns research focus paragraphs.
-- `GET /api/schema`: Returns formal JSON Schema Draft 2020-12.
+- `GET /api/schema`: Returns dynamic SQLite database schema introspection.
 - `GET /health`: Health check (`{ "status": "ok", "service": "academic-portfolio-backend" }`).
 
 ---
 
 ## 4. Implementation Files
 
-- [server.js](file:///Users/cv/Desktop/Portfolio/server.js): Hono server with CORS, logging, route handlers, and static asset serving.
-- [package.json](file:///Users/cv/Desktop/Portfolio/package.json): Minimal dependency setup (`hono`, `@hono/node-server`).
-- [content.json](file:///Users/cv/Desktop/Portfolio/content.json): Live data bundle.
-- [schema.json](file:///Users/cv/Desktop/Portfolio/schema.json): Standard JSON Schema.
+- [server.js](file:///Users/cv/Documents/ResearchPaperDocument/src/server.js): Hono server with CORS, logging, route handlers, and static asset serving.
+- [package.json](file:///Users/cv/Documents/ResearchPaperDocument/package.json): Minimal dependency setup (`hono`, `@hono/node-server`, `better-sqlite3`).
+- [database/portfolio.db](file:///Users/cv/Documents/ResearchPaperDocument/database/portfolio.db): Embedded local SQLite database.
+- [database/schema.sql](file:///Users/cv/Documents/ResearchPaperDocument/database/schema.sql): SQLite schema DDL and seed dataset.

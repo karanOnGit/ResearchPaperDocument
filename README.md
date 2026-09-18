@@ -20,9 +20,7 @@ Portfolio/
 ├── src/                    # Backend server source code
 │   ├── db/
 │   │   ├── database.js     # Embedded SQLite connection, schema & query layer
-│   │   ├── seed.js         # Standalone database seed / reset script
-│   │   ├── content.json    # Local JSON data snapshot & backup store
-│   │   └── schema.json     # JSON schema specification
+│   │   └── seed.js         # Standalone database seed / reset script
 │   └── server.js           # Hono web server & REST API endpoints
 │
 ├── database/               # Local database files & migrations
@@ -59,7 +57,7 @@ ADMIN_PIN=1107
 > **Note:** No external database servers or cloud accounts required! The SQLite database is created and auto-seeded automatically on first startup.
 
 ### 3. Seed / Reset Database (Optional)
-To manually seed or reset the SQLite database from `content.json`:
+To manually seed or reset the SQLite database from `schema.sql`:
 ```bash
 npm run db:seed
 ```
