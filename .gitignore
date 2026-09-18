@@ -12,3 +12,9 @@ yarn-error.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# SQLite database files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm

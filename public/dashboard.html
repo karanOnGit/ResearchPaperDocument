@@ -208,9 +208,9 @@
         </div>
 
         <div class="flex items-center gap-4">
-          <div id="supabase-badge" class="flex items-center gap-1.5 text-[11px] font-mono text-neutral-500 bg-neutral-50 border border-neutral-200 px-2.5 py-1 rounded-full">
+          <div id="db-badge" class="flex items-center gap-1.5 text-[11px] font-mono text-neutral-500 bg-neutral-50 border border-neutral-200 px-2.5 py-1 rounded-full">
             <span class="w-2 h-2 rounded-full bg-emerald-500" id="db-indicator"></span>
-            <span id="db-status-text">Synchronized</span>
+            <span id="db-status-text">SQLite Active</span>
           </div>
 
           <a href="/" target="_blank" class="text-xs font-mono text-neutral-600 hover:text-black transition-colors flex items-center gap-1">
@@ -696,10 +696,10 @@
 
         if (json.database?.connected) {
           indicator.className = 'w-2 h-2 rounded-full bg-emerald-500';
-          text.textContent = 'Supabase Connected';
+          text.textContent = 'SQLite Connected';
         } else {
           indicator.className = 'w-2 h-2 rounded-full bg-amber-400';
-          text.textContent = 'Local Synced';
+          text.textContent = 'Offline';
         }
       } catch {
         document.getElementById('db-status-text').textContent = 'Live Synced';

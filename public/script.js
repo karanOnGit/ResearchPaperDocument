@@ -1,4 +1,4 @@
-// Minimal Academic Notebook Portfolio & Google Docs Reader Scripts (Hono & Supabase API Powered)
+// Minimal Academic Notebook Portfolio & Google Docs Reader Scripts (Hono & SQLite API Powered)
 
 // Drizzling Background Rain Canvas Animation (Landing Page Only)
 class DrizzleAnimation {
@@ -112,7 +112,7 @@ function getEssayById(essayId) {
   return siteData.notes.find(n => n.id === essayId || n.slug === essayId);
 }
 
-// Dynamically Render Landing Page from Supabase / API Data
+// Dynamically Render Landing Page from SQLite / API Data
 function renderLandingPage(data) {
   if (!data) return;
 
@@ -222,7 +222,7 @@ function navigateToHome() {
 async function navigateToEssay(essayId) {
   let essay = getEssayById(essayId);
 
-  // Try fetching single note from Hono / Supabase API
+  // Try fetching single note from Hono / SQLite API
   if (!essay || !essay.sections || essay.sections.length === 0) {
     try {
       const res = await fetch(`/api/notes/${essayId}`);

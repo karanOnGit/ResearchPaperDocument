@@ -1,6 +1,6 @@
 # Karan — Notes & Exploratory Research (Academic Portfolio)
 
-A minimalist, high-performance academic research notebook and interactive reader view, powered by **Hono**, **Supabase**, and Vanilla Web Technologies.
+A minimalist, high-performance academic research notebook and interactive reader view, powered by **Hono**, **SQLite** (`better-sqlite3`), and Vanilla Web Technologies.
 
 ---
 
@@ -19,19 +19,21 @@ Portfolio/
 │
 ├── src/                    # Backend server source code
 │   ├── db/
-│   │   ├── content.json    # Local fallback JSON data store
+│   │   ├── database.js     # Embedded SQLite connection, schema & query layer
+│   │   ├── seed.js         # Standalone database seed / reset script
+│   │   ├── content.json    # Local JSON data snapshot & backup store
 │   │   └── schema.json     # JSON schema specification
-│   ├── server.js           # Hono web server & REST API endpoints
-│   └── supabase.js         # Supabase PostgreSQL client singleton
+│   └── server.js           # Hono web server & REST API endpoints
 │
-├── database/               # Database migrations & schemas
-│   └── supabase_schema.sql # PostgreSQL DDL, tables, and seed dataset
+├── database/               # Local database files & migrations
+│   ├── schema.sql          # SQLite table DDL, indexes, and relations
+│   └── portfolio.db        # Embedded local SQLite database (~4-50 KB)
 │
 ├── docs/                   # Developer documentation & API contracts
 │   └── api_schema_documentation.md # API endpoints & JSON payloads
 │
-├── .env.local / .env       # Environment variables (Supabase keys)
-├── .gitignore              # Git ignore rules
+├── .env.local / .env       # Environment variables (optional PORT, ADMIN_PIN)
+├── .gitignore              # Git ignore rules (ignores *.db and OS files)
 ├── package.json            # Node.js dependencies and scripts
 ├── render.yaml             # Render deployment configuration
 └── README.md               # Project documentation
@@ -46,16 +48,23 @@ Portfolio/
 npm install
 ```
 
-### 2. Configure Environment
+### 2. Configure Environment (Optional)
 Create `.env` (or `.env.local`):
 ```env
 PORT=3000
 ADMIN_PIN=1107
-SUPABASE_URL=https://<your-project>.supabase.co
-SUPABASE_ANON_KEY=<your-anon-key>
+# DATABASE_PATH=./database/portfolio.db  # (Optional, defaults to ./database/portfolio.db)
 ```
 
-### 3. Run Locally
+> **Note:** No external database servers or cloud accounts required! The SQLite database is created and auto-seeded automatically on first startup.
+
+### 3. Seed / Reset Database (Optional)
+To manually seed or reset the SQLite database from `content.json`:
+```bash
+npm run db:seed
+```
+
+### 4. Run Locally
 ```bash
 # Start production server
 npm start
@@ -78,14 +87,14 @@ Server runs on: [http://localhost:3000](http://localhost:3000)
   - Keyboard shortcuts (`Cmd+B`, `Cmd+I`, `Cmd+M`, `Cmd+K`, `Cmd+Shift+A`...).
   - Live KaTeX & HTML preview.
   - Profile, hero, and about paragraph settings.
-  - JSON backup and sync.
+  - Embedded SQLite real-time status and JSON sync.
 
 ---
 
 ## 🌐 API Endpoints
 
-- `GET /health` — Service and database health check.
-- `GET /api/portfolio` — Complete aggregated portfolio data.
+- `GET /health` — Service and SQLite database health check.
+- `GET /api/portfolio` — Complete aggregated portfolio data from SQLite.
 - `GET /api/notes` — All research notes metadata.
 - `GET /api/notes/:id` — Single research note with outline sections.
 - `POST /api/notes` — Create new research note *(protected)*.
@@ -101,5 +110,4 @@ Server runs on: [http://localhost:3000](http://localhost:3000)
 
 This repository includes a [`render.yaml`](./render.yaml) Blueprint:
 1. Connect repository on [Render](https://render.com).
-2. Set environment variables `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
-3. Deploy!
+2. Deploy directly without requiring external database setup!
